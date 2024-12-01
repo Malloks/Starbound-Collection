@@ -1,18 +1,17 @@
 {
-  "name": "my-node-project",
+  "name": "adaptable-server",
   "version": "1.0.0",
-  "description": "A simple Node.js project",
+  "description": "A simple server to serve images and index.html",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [
-    "node",
-    "express"
-  ],
-  "author": "Your Name",
-  "license": "ISC",
   "dependencies": {
-    "express": "^4.21.1"
-  }
+    "express": "^4.18.2",
+    "path": "^0.12.7"
+  },
+  "engines": {
+    "node": ">=14.x"
+  },
+  "license": "MIT"
 }
