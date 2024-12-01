@@ -1,4 +1,17 @@
 {
+  "name": "my-node-project",
+  "version": "1.0.0",
+  "description": "A simple Node.js project",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "node",
+    "express"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
   "dependencies": {
     "express": "^4.21.1"
   }
