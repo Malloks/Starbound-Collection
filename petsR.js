@@ -6,7 +6,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const response = await fetch('/images?folder=Pets');
+    
+    // Check if the response is okay (status 200)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch images: ${response.statusText}`);
+    }
+    
     const images = await response.json();
+
+    // Log the images to see if they are fetched correctly
+    console.log(images);
 
     images.forEach((src, index) => {
       const gridItem = document.createElement('div');
