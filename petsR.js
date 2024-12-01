@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const savedState = JSON.parse(localStorage.getItem('gridState')) || {};
 
   try {
-      const response = await fetch('/images?folder=Pets'); // Change the folder name to "PetsR"
+      const response = await fetch('/images?folder=Pets'); // Change the folder name to "Pets"
       const images = await response.json();
 
       images.forEach((src, index) => {
