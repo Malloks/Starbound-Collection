@@ -83,5 +83,3 @@ app.get('/images', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
-
-const bodyParser = require("body-parser"); router.use(bodyParser.json());
