@@ -79,21 +79,9 @@ body {
     filter: grayscale(100%); /* Grays out the image */
     cursor: not-allowed; /* Changes the cursor to indicate that it's inactive */
   }
-    
+
   /* Animation for the glow effect */
   @keyframes glow {
-    0% {
-      filter: brightness(0) invert(1) hue-rotate(180deg);
-    }
-    50% {
-      filter: brightness(0) invert(1) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
-    }
-    100% {
-      filter: brightness(0) invert(1) hue-rotate(180deg) drop-shadow(0 0 20px red) drop-shadow(0 0 30px red);
-    }
-  }
-
-  @keyframes glowPod {
     0% {
       filter: brightness(0) invert(1) hue-rotate(180deg);
     }
