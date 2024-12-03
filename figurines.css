@@ -22,7 +22,7 @@ h1 {
 /* Universal grid styling */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); /* Creates a responsive grid */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Creates a responsive grid */
   gap: 10px; /* Space between grid items */
   max-width: 90%; /* Ensures grid is responsive */
   margin: 20px 0;
@@ -42,8 +42,8 @@ h1 {
   position: relative;
   cursor: pointer; /* Makes the items look clickable */
   transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
-  height: 75px; /* Fixed height */
-  width: 75px;  /* Fixed width */
+  height: 70px; /* Fixed height */
+  width: 70px;  /* Fixed width */
   overflow: hidden; /* Prevents images from overflowing */
   background-color: rgba(148, 148, 148, 0.19);
   box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
@@ -58,8 +58,8 @@ h1 {
 
 .grid-item img {
   object-fit: cover; /* Ensures images fill the fixed box */
-  max-width: 115%;
-  max-height: 115%;
+  max-width: 90%;
+  max-height: 90%;
   border-radius: 4px;
   -webkit-filter: drop-shadow(5px 5px 5px #1a1a1a);
   filter: drop-shadow(5px 5px 5px #1a1a1a);  }

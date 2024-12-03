@@ -1,112 +1,140 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const grid = document.getElementById('grid');
-  
-  // Use a distinct key for figurines grid state
+  const normalGrid = document.getElementById('normal-grid');
+  const bossGrid = document.getElementById('boss-grid');
+  const oreGrid = document.getElementById('ore-grid');
+
+  if (!normalGrid || !bossGrid || !oreGrid) {
+    console.error('Error: Grids not found in the HTML');
+    return; // Stop execution if grids are not found
+  }
+
   const savedStateKey = 'gridStateFigurines';
   const savedState = JSON.parse(localStorage.getItem(savedStateKey)) || {};
 
+  const specialIndexes = [60, 61, 62, 63, 64, 65, 66, 67, 68];
+  const oreIndexes = [69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84]; // Numbers for ore grid
+
   try {
-      const response = await fetch('/images?folder=Figurines');
-      const images = await response.json();
+    const response = await fetch('/images?folder=Figurines');
+    const images = await response.json();
 
-      images.forEach((src, index) => {
-          const gridItem = document.createElement('div');
-          gridItem.classList.add('grid-item');
-          gridItem.dataset.index = index; // Store the index to associate with the state
+    images.forEach((src, index) => {
+      const gridItem = document.createElement('div');
+      gridItem.classList.add('grid-item');
+      gridItem.dataset.index = index;
 
-          const img = document.createElement('img');
-          img.src = src;
-          img.alt = `Figurine ${index + 1}`;
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = `Figurine ${index + 1}`;
 
-          const number = document.createElement('span');
-          number.textContent = `${index + 1}`.padStart(2, '0');
+      const number = document.createElement('span');
+      let numberText = '';
 
-          gridItem.appendChild(img);
-          gridItem.appendChild(number);
-          grid.appendChild(gridItem);
+      // Check if this image is part of the ore grid and assign the appropriate number
+      if (oreIndexes.includes(index)) {
+        const oreIndex = oreIndexes.indexOf(index) + 70; // Start numbering from 70
+        numberText = oreIndex.toString().padStart(2, '0');
+      } else {
+        numberText = `${index + 1}`.padStart(2, '0');
+      }
 
-          // If the grid item has been saved in localStorage as Capture Pod, apply it
-          if (savedState[index] && savedState[index].capturePod) {
-              img.style.opacity = 0; // Hide the original image
-              const capturePodImage = document.createElement('img');
-              capturePodImage.src = 'Images/Misc/Capture_Pod.png';
-              capturePodImage.alt = 'Capture Pod';
-              capturePodImage.style.opacity = 1;
-              capturePodImage.classList.add('capture-pod-image');
-              gridItem.appendChild(capturePodImage);
-              gridItem.classList.add('capture-pod');
-          } else {
-              img.style.opacity = 1; // Ensure original image is visible if Capture Pod is not shown
-          }
+      number.textContent = numberText;
 
-          // Add click event listener to each grid item
-          gridItem.addEventListener('click', function () {
-              const imageElement = this.querySelector('img');
-              const numberElement = this.querySelector('span');
-              
-              if (!this.classList.contains('capture-pod')) {
-                  imageElement.style.filter = 'hue-rotate(180deg)';
-                  this.classList.add('clicked');
+      gridItem.appendChild(img);
+      gridItem.appendChild(number);
 
-                  setTimeout(() => {
-                      imageElement.style.opacity = 0;
-                      const newImage = document.createElement('img');
-                      newImage.src = 'Images/Misc/Capture_Pod.png';
-                      newImage.alt = 'Capture Pod';
-                      newImage.style.objectFit = 'cover';
-                      newImage.style.opacity = 1;
-                      newImage.classList.add('capture-pod-image');
+      if (specialIndexes.includes(index)) {
+        bossGrid.appendChild(gridItem); // Add to boss grid
+      } else if (oreIndexes.includes(index)) {
+        oreGrid.appendChild(gridItem); // Add to ore grid and add number
+      } else {
+        normalGrid.appendChild(gridItem); // Add to normal grid
+      }
 
-                      this.innerHTML = '';
-                      this.appendChild(numberElement);
-                      this.appendChild(imageElement);
-                      this.appendChild(newImage);
+      if (savedState[index] && savedState[index].pedestalAdded) {
+        const pedestalImage = specialIndexes.includes(index) ? 'Images/Misc/BossPedistal.png' : 'Images/Misc/Pedistal.png';
+        applyPedestalAnimation(gridItem, img, number, false, savedState[index].pedestalPosition, pedestalImage);
+      }
 
-                      savedState[this.dataset.index] = { capturePod: true, isOriginalVisible: false };
-                      localStorage.setItem(savedStateKey, JSON.stringify(savedState));
+      gridItem.addEventListener('click', function () {
+        const pedestalImage = specialIndexes.includes(index) ? 'Images/Misc/BossPedistal.png' : 'Images/Misc/Pedistal.png';
 
-                      setTimeout(() => {
-                          imageElement.style.filter = 'none';
-                          this.classList.remove('clicked');
-                      }, 0);
-
-                      this.classList.add('capture-pod');
-                  }, 1000);
-              } else {
-                  const capturePodImage = this.querySelector('.capture-pod-image');
-                  capturePodImage.style.filter = 'hue-rotate(180deg)';
-                  this.classList.add('clicked');
-
-                  setTimeout(() => {
-                      capturePodImage.style.opacity = 0;
-
-                      setTimeout(() => {
-                          capturePodImage.remove();
-                          imageElement.style.opacity = 1;
-                          imageElement.style.filter = 'none';
-                          this.classList.remove('clicked');
-
-                          savedState[this.dataset.index] = { capturePod: false, isOriginalVisible: true };
-                          localStorage.setItem(savedStateKey, JSON.stringify(savedState));
-
-                          this.classList.remove('capture-pod');
-                      }, 0);
-                  }, 1000);
-              }
-          });
+        if (this.classList.contains('pedestal-added')) {
+          removePedestalAnimation(this, img, number);
+          savedState[this.dataset.index] = { pedestalAdded: false, pedestalPosition: null };
+        } else {
+          applyPedestalAnimation(this, img, number, true, null, pedestalImage);
+          const pedestalPosition = -(60 - img.offsetTop);
+          savedState[this.dataset.index] = { pedestalAdded: true, pedestalPosition };
+        }
+        localStorage.setItem(savedStateKey, JSON.stringify(savedState));
       });
+    });
   } catch (error) {
-      console.error('Failed to fetch images:', error);
+    console.error('Failed to fetch images:', error);
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  const burger = document.createElement('div');
-  burger.classList.add('burger');
-  burger.innerHTML = '<div class="line"></div><div class="line"></div><div class="line"></div>';
-  document.querySelector('.navbar-container').appendChild(burger);
+function applyPedestalAnimation(gridItem, img, number, animate = true, savedPedestalPosition = null, pedestalImage) {
+  const pedestal = document.createElement('img');
+  pedestal.src = pedestalImage;
+  pedestal.alt = 'Pedestal';
+  pedestal.style.position = 'absolute';
+  pedestal.style.zIndex = '-1';
+  pedestal.style.left = '50%';
+  pedestal.style.transform = 'translateX(-50%)';
+  pedestal.style.filter = 'grayscale(100%)';
+  pedestal.style.transition = animate ? 'bottom 1s ease, filter 1s ease' : 'none';
 
-  burger.addEventListener('click', () => {
-      document.querySelector('.navbar-links').classList.toggle('active');
-  });
-});
+  gridItem.style.position = 'relative';
+  const pedestalStartBottom = -80;
+  const pedestalStopBottom = savedPedestalPosition !== null ? savedPedestalPosition : -(60 - img.offsetTop);
+
+  pedestal.style.bottom = `${pedestalStartBottom}px`;
+
+  gridItem.appendChild(pedestal);
+  gridItem.classList.add('pedestal-added');
+
+  setTimeout(() => {
+    pedestal.style.bottom = `${pedestalStopBottom}px`;
+  }, 50);
+
+  img.style.filter = 'grayscale(100%)';
+  img.style.transition = animate ? 'filter 1s ease' : 'none';
+
+  setTimeout(() => {
+    pedestal.style.animation = 'shake 0.5s ease forwards';
+  }, 1050);
+
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes shake {
+      0% { transform: translateX(-50%) translateX(0); }
+      25% { transform: translateX(-50%) translateX(-1px); }
+      50% { transform: translateX(-50%) translateX(1px); }
+      75% { transform: translateX(-50%) translateX(-1px); }
+      100% { transform: translateX(-50%) translateX(0); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function removePedestalAnimation(gridItem, img, number) {
+  const pedestal = gridItem.querySelector('img[alt="Pedestal"]');
+  if (pedestal) {
+    const imgBottom = img.offsetTop + img.offsetHeight;
+    const pedestalStartBottom = -(imgBottom + 50);
+
+    pedestal.style.bottom = `${pedestalStartBottom}px`;
+    pedestal.style.transition = 'bottom 1s ease';
+
+    setTimeout(() => {
+      pedestal.remove();
+    }, 1000);
+  }
+
+  img.style.filter = 'none';
+  img.style.transition = 'filter 1s ease';
+
+  gridItem.classList.remove('pedestal-added');
+}
