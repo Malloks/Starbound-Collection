@@ -1,18 +1,22 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM content loaded');
+
     const grid = document.getElementById('grid');
-    
-    // Use a distinct key for pets grid state
-    const savedStateKey = 'gridStatePets';
-    const savedState = JSON.parse(localStorage.getItem(savedStateKey)) || {};
+
+    // Fetch and parse saved states
+    const savedState = JSON.parse(localStorage.getItem('normalPetsState')) || {};
+    console.log('Saved state from localStorage:', savedState);
 
     try {
         const response = await fetch('/images?folder=NormalPets');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
         const images = await response.json();
 
         images.forEach((src, index) => {
             const gridItem = document.createElement('div');
             gridItem.classList.add('grid-item');
-            gridItem.dataset.index = index; // Store the index to associate with the state
+            gridItem.dataset.index = index;
 
             const img = document.createElement('img');
             img.src = src;
@@ -25,88 +29,88 @@ document.addEventListener('DOMContentLoaded', async () => {
             gridItem.appendChild(number);
             grid.appendChild(gridItem);
 
-            // If the grid item has been saved in localStorage as Capture Pod, apply it
-            if (savedState[index] && savedState[index].capturePod) {
-                img.style.opacity = 0; // Hide the original image
-                const capturePodImage = document.createElement('img');
-                capturePodImage.src = 'Images/Misc/Capture_Pod.png';
-                capturePodImage.alt = 'Capture Pod';
-                capturePodImage.style.opacity = 1;
-                capturePodImage.classList.add('capture-pod-image');
-                gridItem.appendChild(capturePodImage);
-                gridItem.classList.add('capture-pod');
-            } else {
-                img.style.opacity = 1; // Ensure original image is visible if Capture Pod is not shown
+            // Apply cached state for normal pets
+            if (savedState[index]) {
+                const { capturePod, scaleFactor, borderRadius } = savedState[index];
+
+                if (capturePod) {
+                    img.style.opacity = 0;
+                    const capturePodImage = document.createElement('img');
+                    capturePodImage.src = 'Images/Misc/Capture_Pod.png';
+                    capturePodImage.alt = 'Capture Pod';
+                    capturePodImage.classList.add('capture-pod-image');
+                    gridItem.appendChild(capturePodImage);
+                    gridItem.classList.add('capture-pod');
+                }
+
+                if (scaleFactor && borderRadius) {
+                    img.style.transform = `scale(${scaleFactor})`;
+                    img.style.borderRadius = borderRadius;
+                }
             }
 
-            // Add click event listener to each grid item
+            // Event listener for click interactions
             gridItem.addEventListener('click', function () {
                 const imageElement = this.querySelector('img');
-                const numberElement = this.querySelector('span');
-                
-                if (!this.classList.contains('capture-pod')) {
-                    imageElement.style.filter = 'hue-rotate(180deg)';
+                const isCapturePod = this.classList.contains('capture-pod');
+
+                if (!isCapturePod) {
+                    // Shrink animation
                     this.classList.add('clicked');
+                    const originalHeight = imageElement.height;
+                    const originalWidth = imageElement.width;
+                    const scaleFactor = (35 / originalHeight + 35 / originalWidth) / 2;
+
+                    imageElement.style.transition = 'transform 0.5s ease, border-radius 0.5s ease';
+                    imageElement.style.transform = `scale(${scaleFactor})`;
+                    imageElement.style.borderRadius = '50%';
 
                     setTimeout(() => {
+                        const capturePodImage = document.createElement('img');
+                        capturePodImage.src = 'Images/Misc/Capture_Pod.png';
+                        capturePodImage.alt = 'Capture Pod';
+                        capturePodImage.classList.add('capture-pod-image');
+
                         imageElement.style.opacity = 0;
-                        const newImage = document.createElement('img');
-                        newImage.src = 'Images/Misc/Capture_Pod.png';
-                        newImage.alt = 'Capture Pod';
-                        newImage.style.objectFit = 'cover';
-                        newImage.style.opacity = 1;
-                        newImage.classList.add('capture-pod-image');
+                        this.appendChild(capturePodImage);
 
-                        this.innerHTML = '';
-                        this.appendChild(numberElement);
-                        this.appendChild(imageElement);
-                        this.appendChild(newImage);
-
-                        savedState[this.dataset.index] = { capturePod: true, isOriginalVisible: false };
-                        localStorage.setItem(savedStateKey, JSON.stringify(savedState));
-
-                        setTimeout(() => {
-                            imageElement.style.filter = 'none';
-                            this.classList.remove('clicked');
-                        }, 0);
+                        savedState[index] = {
+                            capturePod: true,
+                            scaleFactor,
+                            borderRadius: '50%',
+                        };
+                        localStorage.setItem('normalPetsState', JSON.stringify(savedState));
 
                         this.classList.add('capture-pod');
-                    }, 1000);
+                        this.classList.remove('clicked');
+                    }, 500);
                 } else {
+                    // Restore animation
                     const capturePodImage = this.querySelector('.capture-pod-image');
-                    capturePodImage.style.filter = 'hue-rotate(180deg)';
+                    capturePodImage.remove();
+
                     this.classList.add('clicked');
+                    imageElement.style.transition = 'transform 0.5s ease, border-radius 0.5s ease';
+                    imageElement.style.opacity = 1;
+                    imageElement.style.transform = 'scale(1)';
+                    imageElement.style.borderRadius = '0%';
 
                     setTimeout(() => {
-                        capturePodImage.style.opacity = 0;
+                        this.classList.remove('clicked');
 
-                        setTimeout(() => {
-                            capturePodImage.remove();
-                            imageElement.style.opacity = 1;
-                            imageElement.style.filter = 'none';
-                            this.classList.remove('clicked');
+                        savedState[index] = {
+                            capturePod: false,
+                            scaleFactor: 1,
+                            borderRadius: '0%',
+                        };
+                        localStorage.setItem('normalPetsState', JSON.stringify(savedState));
 
-                            savedState[this.dataset.index] = { capturePod: false, isOriginalVisible: true };
-                            localStorage.setItem(savedStateKey, JSON.stringify(savedState));
-
-                            this.classList.remove('capture-pod');
-                        }, 0);
-                    }, 1000);
+                        this.classList.remove('capture-pod');
+                    }, 500);
                 }
             });
         });
     } catch (error) {
         console.error('Failed to fetch images:', error);
     }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const burger = document.createElement('div');
-    burger.classList.add('burger');
-    burger.innerHTML = '<div class="line"></div><div class="line"></div><div class="line"></div>';
-    document.querySelector('.navbar-container').appendChild(burger);
-
-    burger.addEventListener('click', () => {
-        document.querySelector('.navbar-links').classList.toggle('active');
-    });
 });

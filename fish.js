@@ -67,6 +67,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gridItem.appendChild(number);
                 gridItem.appendChild(fishbowlImage);  // Append fishbowl to grid item
 
+                // Check if the fish has a cached fishbowl state
+                const fishState = savedState[`${folderName}_${index}`];
+                if (fishState && fishState.hasFishbowl) {
+                    // If the fish has a fishbowl, show it and adjust opacity
+
+                    const fishWidth = img.width; // Get the width of the fish image
+
+                    if (fishWidth <= 50) {
+                        fishbowlImage.src = 'Images/Misc/FishbowlSmall.png';
+                    } else if (fishWidth > 60 && fishWidth <= 75) {
+                        fishbowlImage.src = 'Images/Misc/FishbowlMedium.png';
+                    } else {
+                        fishbowlImage.src = 'Images/Misc/FishbowlBig.png';
+                    }
+                    fishbowlImage.style.display = 'block';  // Show the fishbowl
+                    fishbowlImage.style.zIndex = "-10";
+                    img.style.opacity = '0.5';  // Set the fish opacity to indicate it has been caught
+                    fishbowlImage.style.top = '12px';  // Position the fishbowl correctly
+                }
+
                 // Append to the appropriate grid based on folder
                 if (folderName === 'Ocean') {
                     oceanGrid.appendChild(gridItem);
@@ -82,8 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gridItem.addEventListener('click', function () {
                     const fishWidth = img.width; // Get the width of the fish image
 
-                    // Select the appropriate fishbowl based on fish width
+                    // Check if the fish already has a fishbowl
                     if (fishbowlImage.style.display === 'none') {
+                        // If no fishbowl, set the appropriate fishbowl size
                         if (fishWidth <= 50) {
                             fishbowlImage.src = 'Images/Misc/FishbowlSmall.png';
                         } else if (fishWidth > 60 && fishWidth <= 75) {
@@ -124,14 +145,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         fishContainer.classList.add('shake')
                                     }, 125);
                                     fishbowlImage.classList.remove('shake');
-                                    fishContainer.classList.remove('shake')
+                                    fishContainer.classList.remove('shake');
+
+                                    // Cache the state of the fish having a fishbowl
+                                    savedState[`${folderName}_${index}`] = { hasFishbowl: true };
+                                    localStorage.setItem(savedStateKey, JSON.stringify(savedState));
                                 }, 500); // Delay before fishbowl starts falling
                             }, 500); // Delay before Fishbowl appears
                         }, 500); // Wait for FishHook to "catch" the fish (stay at 0px for 0.5 seconds)
                     } else {
-                        // Reset if clicked again (to hide Fishbowl)
+                        // If the fish already has a fishbowl, remove it
                         fishbowlImage.style.display = 'none';
                         img.style.opacity = '1';  // Revert fish image opacity to 100%
+
+                        // Update the cached state to reflect that the fish no longer has a fishbowl
+                        savedState[`${folderName}_${index}`] = { hasFishbowl: false };
+                        localStorage.setItem(savedStateKey, JSON.stringify(savedState));
                     }
                 });
             });

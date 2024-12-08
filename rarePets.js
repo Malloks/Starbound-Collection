@@ -1,138 +1,112 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM content loaded');
-  
+
     const grid = document.getElementById('grid');
-  
-    // Get the current grid state from localStorage (if exists)
     const savedState = JSON.parse(localStorage.getItem('gridState')) || {};
     console.log('Saved state from localStorage:', savedState);
-  
+
     try {
-        console.log('Fetching images from server...');
-        const response = await fetch('/images?folder=Pets'); // Change the folder name to "Pets"
-  
-        // Debugging response status
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-  
+        const response = await fetch('/images?folder=Pets');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
         const images = await response.json();
-        console.log('Images fetched:', images);
-  
+
         images.forEach((src, index) => {
-            console.log(`Creating grid item for image ${index + 1}`);
-            
             const gridItem = document.createElement('div');
             gridItem.classList.add('grid-item');
-            gridItem.dataset.index = index;  // Store the index to associate with the state
-  
+            gridItem.dataset.index = index;
+
             const img = document.createElement('img');
             img.src = src;
             img.alt = `Pet ${index + 1}`;
-            console.log(`Image source for pet ${index + 1}:`, src);
-  
+
             const number = document.createElement('span');
             number.textContent = `${index + 1}`.padStart(2, '0');
-  
+
             gridItem.appendChild(img);
             gridItem.appendChild(number);
             grid.appendChild(gridItem);
-  
-            // If the grid item has been saved in localStorage as Capture Pod, apply it
-            if (savedState[index] && savedState[index].capturePod) {
-                console.log(`Capture Pod found for pet ${index + 1}, hiding original image`);
-                img.style.opacity = 0;  // Hide the original image
-                const capturePodImage = document.createElement('img');
-                capturePodImage.src = 'Images/Misc/Capture_Pod.png';
-                capturePodImage.alt = 'Capture Pod';
-                capturePodImage.style.opacity = 1;
-                capturePodImage.classList.add('capture-pod-image');
-                gridItem.appendChild(capturePodImage);
-                gridItem.classList.add('capture-pod');
-            } else {
-                console.log(`No Capture Pod for pet ${index + 1}, keeping original image visible`);
-                img.style.opacity = 1;  // Ensure original image is visible if Capture Pod is not shown
+
+            if (savedState[index]) {
+                const { capturePod, scaleFactor, borderRadius } = savedState[index];
+
+                if (capturePod) {
+                    img.style.opacity = 0;
+                    const capturePodImage = document.createElement('img');
+                    capturePodImage.src = 'Images/Misc/Capture_Pod.png';
+                    capturePodImage.alt = 'Capture Pod';
+                    capturePodImage.classList.add('capture-pod-image');
+                    gridItem.appendChild(capturePodImage);
+                    gridItem.classList.add('capture-pod');
+                }
+
+                if (scaleFactor && borderRadius) {
+                    img.style.transform = `scale(${scaleFactor})`;
+                    img.style.borderRadius = borderRadius;
+                }
             }
-  
-            // Add click event listener to each grid item
+
             gridItem.addEventListener('click', function () {
                 const imageElement = this.querySelector('img');
-                const numberElement = this.querySelector('span');
-                console.log(`Grid item clicked: ${this.dataset.index}`);
-  
-                // If the Capture Pod image is not currently displayed
-                if (!this.classList.contains('capture-pod')) {
-                    console.log('Capture Pod not displayed, changing image');
-                    // Make the original image red and apply the glow effect
-                    imageElement.style.filter = 'hue-rotate(180deg)';
-                    this.classList.add('clicked');  // Apply glow animation
-  
-                    // Wait for the glow animation to finish
+                const isCapturePod = this.classList.contains('capture-pod');
+
+                if (!isCapturePod) {
+                    // Shrink animation
+                    this.classList.add('clicked');
+                    const originalHeight = imageElement.height;
+                    const originalWidth = imageElement.width;
+                    const scaleFactor = (35 / originalHeight + 35 / originalWidth) / 2;
+
+                    imageElement.style.transition = 'transform 0.5s ease, border-radius 0.5s ease';
+                    imageElement.style.transform = `scale(${scaleFactor})`;
+                    imageElement.style.borderRadius = '50%';
+
                     setTimeout(() => {
-                        // Fade out the original image (opacity 0)
+                        const capturePodImage = document.createElement('img');
+                        capturePodImage.src = 'Images/Misc/Capture_Pod.png';
+                        capturePodImage.alt = 'Capture Pod';
+                        capturePodImage.classList.add('capture-pod-image');
+
                         imageElement.style.opacity = 0;
-  
-                        // Create and place the Capture Pod image on top
-                        const newImage = document.createElement('img');
-                        newImage.src = 'Images/Misc/Capture_Pod.png';
-                        newImage.alt = 'Capture Pod';
-                        newImage.style.objectFit = 'cover';
-                        newImage.style.opacity = 1;
-                        newImage.classList.add('capture-pod-image');
-  
-                        // Clear existing content, keeping the number, and add the new image on top
-                        this.innerHTML = '';
-                        this.appendChild(numberElement);
-                        this.appendChild(imageElement);
-                        this.appendChild(newImage);
-  
-                        // Update the localStorage with the new state
-                        savedState[this.dataset.index] = { capturePod: true, isOriginalVisible: false };
+                        this.appendChild(capturePodImage);
+
+                        savedState[index] = {
+                            capturePod: true,
+                            scaleFactor,
+                            borderRadius: '50%',
+                        };
                         localStorage.setItem('gridState', JSON.stringify(savedState));
-  
-                        // Remove the red hue and the glow effect from the original image
-                        setTimeout(() => {
-                            imageElement.style.filter = 'none'; // Remove the hue-rotate
-                            this.classList.remove('clicked'); // Remove the glow effect
-                        }, 0);  // Wait for 1 second for the glow effect to finish
-  
+
                         this.classList.add('capture-pod');
-                    }, 1000); // Wait 1 second for the red glow animation
+                        this.classList.remove('clicked');
+                    }, 500);
                 } else {
-                    // If the Capture Pod is already displayed, apply a glow effect to it
+                    // Restore animation
                     const capturePodImage = this.querySelector('.capture-pod-image');
-                    console.log('Capture Pod displayed, changing image back to original');
-  
-                    // Apply the glow effect to the Capture Pod
-                    capturePodImage.style.filter = 'hue-rotate(180deg)';
-                    this.classList.add('clicked');  // Apply glow animation
-  
-                    // Wait for the glow animation to finish
+                    capturePodImage.remove();
+
+                    this.classList.add('clicked');
+                    imageElement.style.transition = 'transform 0.5s ease, border-radius 0.5s ease';
+                    imageElement.style.opacity = 1;
+                    imageElement.style.transform = 'scale(1)';
+                    imageElement.style.borderRadius = '0%';
+
                     setTimeout(() => {
-                        // Fade out the Capture Pod image
-                        capturePodImage.style.opacity = 0;
-  
-                        // After fading out, remove the Capture Pod image and show the original image again
-                        setTimeout(() => {
-                            capturePodImage.remove();
-                            imageElement.style.opacity = 1;  // Make the original image visible again
-                            imageElement.style.filter = 'none'; // Reset the filter (no red glow)
-                            
-                            // Remove the glow effect (reset)
-                            this.classList.remove('clicked');
-  
-                            // Update the localStorage to reflect that the Capture Pod was removed
-                            savedState[this.dataset.index] = { capturePod: false, isOriginalVisible: true };
-                            localStorage.setItem('gridState', JSON.stringify(savedState));
-  
-                            this.classList.remove('capture-pod');
-                        }, 0); // Wait for the Capture Pod image to fade out
-                    }, 1000); // Wait 1 second for the red glow animation
+                        this.classList.remove('clicked');
+
+                        savedState[index] = {
+                            capturePod: false,
+                            scaleFactor: 1,
+                            borderRadius: '0%',
+                        };
+                        localStorage.setItem('gridState', JSON.stringify(savedState));
+
+                        this.classList.remove('capture-pod');
+                    }, 500);
                 }
             });
         });
     } catch (error) {
         console.error('Failed to fetch images:', error);
     }
-  });  
+});

@@ -8,8 +8,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const savedStateKey = 'gridStateFigurines';
-  const savedState = JSON.parse(localStorage.getItem(savedStateKey)) || {};
+  // Separate keys for each grid
+  const normalStateKey = 'gridStateNormal';
+  const bossStateKey = 'gridStateBosses';
+  const oreStateKey = 'gridStateOres';
+
+  const savedNormalState = JSON.parse(localStorage.getItem(normalStateKey)) || {};
+  const savedBossState = JSON.parse(localStorage.getItem(bossStateKey)) || {};
+  const savedOreState = JSON.parse(localStorage.getItem(oreStateKey)) || {};
 
   try {
     // Fetch images from different folders
@@ -22,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const oreImages = await oreImagesResponse.json();
 
     // Function to create grid items
-    function createGridItems(images, grid, folderName) {
+    function createGridItems(images, grid, folderName, savedState, stateKey) {
       images.forEach((src, index) => {
         const gridItem = document.createElement('div');
         gridItem.classList.add('grid-item');
@@ -56,7 +62,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const pedestalPosition = -(60 - img.offsetTop);
             savedState[this.dataset.index] = { pedestalAdded: true, pedestalPosition };
           }
-          localStorage.setItem(savedStateKey, JSON.stringify(savedState));
+          // Save the updated state to localStorage for the specific subchapter
+          localStorage.setItem(stateKey, JSON.stringify(savedState));
         });
 
         // Append to the appropriate grid based on folder
@@ -71,9 +78,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Create grid items for each category
-    createGridItems(normalImages, normalGrid, 'Normal');
-    createGridItems(bossImages, bossGrid, 'Bosses');
-    createGridItems(oreImages, oreGrid, 'Ores');
+    createGridItems(normalImages, normalGrid, 'Normal', savedNormalState, normalStateKey);
+    createGridItems(bossImages, bossGrid, 'Bosses', savedBossState, bossStateKey);
+    createGridItems(oreImages, oreGrid, 'Ores', savedOreState, oreStateKey);
 
   } catch (error) {
     console.error('Failed to fetch images:', error);
@@ -125,15 +132,7 @@ function applyPedestalAnimation(gridItem, img, number, animate = true, savedPede
 
   // Inject the shake animation keyframes into the document
   const style = document.createElement('style');
-  style.innerHTML = `
-    @keyframes shake {
-      0% { transform: translateX(-50%) translateX(0); }
-      25% { transform: translateX(-50%) translateX(-1px); }
-      50% { transform: translateX(-50%) translateX(1px); }
-      75% { transform: translateX(-50%) translateX(-1px); }
-      100% { transform: translateX(-50%) translateX(0); }
-    }
-  `;
+  style.innerHTML = `@keyframes shake { 0% { transform: translateX(-50%) translateX(0); } 25% { transform: translateX(-50%) translateX(-1px); } 50% { transform: translateX(-50%) translateX(1px); } 75% { transform: translateX(-50%) translateX(-1px); } 100% { transform: translateX(-50%) translateX(0); } }`;
   document.head.appendChild(style);
 }
 

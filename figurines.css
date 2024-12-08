@@ -2,6 +2,17 @@
   font-family: Starbound Font;
   src: url(Resources/Font/starbound-font.ttf);
 }
+
+/* Disable text selection */
+* {
+  user-select: none;
+}
+
+/* Disable image selection */
+img {
+  user-select: none;
+}
+
 body {
   font-family: Starbound Font;
   background-color: #111;
