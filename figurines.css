@@ -22,12 +22,13 @@ h1 {
 /* Universal grid styling */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Creates a responsive grid */
-  gap: 10px; /* Space between grid items */
-  max-width: 90%; /* Ensures grid is responsive */
+  grid-template-columns: repeat(auto-fill, 110px); /* Creates a responsive grid */
+  gap: 10px;
+  max-width: 100%; /* Ensures grid is responsive */
   margin: 20px 0;
   padding: 10px;
-  justify-items: center; /* Ensures items are centered within their grid cell */
+  justify-items: start; /* Ensures items are centered within their grid cell */
+  align-items: start;
   grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
   grid-auto-flow: row; /* Forces grid items to flow in rows */
 }
@@ -60,7 +61,6 @@ h1 {
   object-fit: cover; /* Ensures images fill the fixed box */
   max-width: 90%;
   max-height: 90%;
-  border-radius: 4px;
   -webkit-filter: drop-shadow(5px 5px 5px #1a1a1a);
   filter: drop-shadow(5px 5px 5px #1a1a1a);  }
 
@@ -74,24 +74,27 @@ h1 {
   margin: 0;
 }
 
+/* Grid container for each section */
+.grid-container {
+  width: 90%;
+  max-width: 90%;
+  margin-bottom: 15px;
+}
+
+.subTitle {
+  text-align: left;
+  font-size: 1.5rem;
+  margin-left: 10px;
+  margin-bottom: -10px;
+  color: #5d5d5d90; /* Matches hover color */
+  font-weight: bold;
+}
+
 /* Class to gray out the image */
 .gray-out {
   filter: grayscale(100%); /* Grays out the image */
   cursor: not-allowed; /* Changes the cursor to indicate that it's inactive */
 }
-
-  /* Animation for the glow effect */
-  @keyframes glow {
-    0% {
-      filter: brightness(0) invert(1) hue-rotate(180deg);
-    }
-    50% {
-      filter: brightness(0) invert(1) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
-    }
-    100% {
-      filter: brightness(0) invert(1) hue-rotate(180deg) drop-shadow(0 0 20px red) drop-shadow(0 0 30px red);
-    }
-  }
 
 /* To make the Capture Pod image appear on top */
 .capture-pod-image {
@@ -118,10 +121,10 @@ h1 {
   z-index: 1000;
   border-bottom-left-radius: 25px;
   border-bottom-right-radius: 25px;
-  background-color: rgba(148, 148, 148, 0.19);
-  box-shadow: 2px 2px 6px 0px rgba(128, 128, 128, 0.165);    
-  backdrop-filter: blur(6.2px);
-  -webkit-backdrop-filter: blur(6.2px);
+  background-color: rgba(60, 60, 60, 0.6);
+  box-shadow: 1px 1px 6px 0px rgba(128, 128, 128, 0.165);    
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .navbar-container {

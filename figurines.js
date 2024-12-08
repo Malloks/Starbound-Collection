@@ -5,75 +5,90 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!normalGrid || !bossGrid || !oreGrid) {
     console.error('Error: Grids not found in the HTML');
-    return; // Stop execution if grids are not found
+    return;
   }
 
   const savedStateKey = 'gridStateFigurines';
   const savedState = JSON.parse(localStorage.getItem(savedStateKey)) || {};
 
-  const specialIndexes = [60, 61, 62, 63, 64, 65, 66, 67, 68];
-  const oreIndexes = [69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84]; // Numbers for ore grid
-
   try {
-    const response = await fetch('/images?folder=Figurines');
-    const images = await response.json();
+    // Fetch images from different folders
+    const normalImagesResponse = await fetch('/images?folder=Figurines/Normal');
+    const bossImagesResponse = await fetch('/images?folder=Figurines/Bosses');
+    const oreImagesResponse = await fetch('/images?folder=Figurines/Ores');
 
-    images.forEach((src, index) => {
-      const gridItem = document.createElement('div');
-      gridItem.classList.add('grid-item');
-      gridItem.dataset.index = index;
+    const normalImages = await normalImagesResponse.json();
+    const bossImages = await bossImagesResponse.json();
+    const oreImages = await oreImagesResponse.json();
 
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = `Figurine ${index + 1}`;
+    // Function to create grid items
+    function createGridItems(images, grid, folderName) {
+      images.forEach((src, index) => {
+        const gridItem = document.createElement('div');
+        gridItem.classList.add('grid-item');
+        gridItem.dataset.index = index;
 
-      const number = document.createElement('span');
-      let numberText = '';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `${folderName} ${index + 1}`;
 
-      // Check if this image is part of the ore grid and assign the appropriate number
-      if (oreIndexes.includes(index)) {
-        const oreIndex = oreIndexes.indexOf(index) + 70; // Start numbering from 70
-        numberText = oreIndex.toString().padStart(2, '0');
-      } else {
-        numberText = `${index + 1}`.padStart(2, '0');
-      }
+        const number = document.createElement('span');
+        number.textContent = `${index + 1}`.padStart(2, '0');
 
-      number.textContent = numberText;
+        gridItem.appendChild(img);
+        gridItem.appendChild(number);
 
-      gridItem.appendChild(img);
-      gridItem.appendChild(number);
-
-      if (specialIndexes.includes(index)) {
-        bossGrid.appendChild(gridItem); // Add to boss grid
-      } else if (oreIndexes.includes(index)) {
-        oreGrid.appendChild(gridItem); // Add to ore grid and add number
-      } else {
-        normalGrid.appendChild(gridItem); // Add to normal grid
-      }
-
-      if (savedState[index] && savedState[index].pedestalAdded) {
-        const pedestalImage = specialIndexes.includes(index) ? 'Images/Misc/BossPedistal.png' : 'Images/Misc/Pedistal.png';
-        applyPedestalAnimation(gridItem, img, number, false, savedState[index].pedestalPosition, pedestalImage);
-      }
-
-      gridItem.addEventListener('click', function () {
-        const pedestalImage = specialIndexes.includes(index) ? 'Images/Misc/BossPedistal.png' : 'Images/Misc/Pedistal.png';
-
-        if (this.classList.contains('pedestal-added')) {
-          removePedestalAnimation(this, img, number);
-          savedState[this.dataset.index] = { pedestalAdded: false, pedestalPosition: null };
-        } else {
-          applyPedestalAnimation(this, img, number, true, null, pedestalImage);
-          const pedestalPosition = -(60 - img.offsetTop);
-          savedState[this.dataset.index] = { pedestalAdded: true, pedestalPosition };
+        // If there's a saved state for this index, restore the pedestal state
+        if (savedState[index] && savedState[index].pedestalAdded) {
+          const pedestalImage = getPedestalImage(folderName);
+          applyPedestalAnimation(gridItem, img, number, false, savedState[index].pedestalPosition, pedestalImage);
         }
-        localStorage.setItem(savedStateKey, JSON.stringify(savedState));
+
+        // Add click event to toggle pedestal
+        gridItem.addEventListener('click', function () {
+          const pedestalImage = getPedestalImage(folderName);
+
+          if (this.classList.contains('pedestal-added')) {
+            removePedestalAnimation(this, img, number);
+            savedState[this.dataset.index] = { pedestalAdded: false, pedestalPosition: null };
+          } else {
+            applyPedestalAnimation(this, img, number, true, null, pedestalImage);
+            const pedestalPosition = -(60 - img.offsetTop);
+            savedState[this.dataset.index] = { pedestalAdded: true, pedestalPosition };
+          }
+          localStorage.setItem(savedStateKey, JSON.stringify(savedState));
+        });
+
+        // Append to the appropriate grid based on folder
+        if (folderName === 'Bosses') {
+          bossGrid.appendChild(gridItem);
+        } else if (folderName === 'Ores') {
+          oreGrid.appendChild(gridItem);
+        } else {
+          normalGrid.appendChild(gridItem);
+        }
       });
-    });
+    }
+
+    // Create grid items for each category
+    createGridItems(normalImages, normalGrid, 'Normal');
+    createGridItems(bossImages, bossGrid, 'Bosses');
+    createGridItems(oreImages, oreGrid, 'Ores');
+
   } catch (error) {
     console.error('Failed to fetch images:', error);
   }
 });
+
+function getPedestalImage(folderName) {
+  if (folderName === 'Ores') {
+    return 'Images/Misc/OrePedistal.png';
+  } else if (folderName === 'Bosses') {
+    return 'Images/Misc/BossPedistal.png';
+  } else {
+    return 'Images/Misc/Pedistal.png';
+  }
+}
 
 function applyPedestalAnimation(gridItem, img, number, animate = true, savedPedestalPosition = null, pedestalImage) {
   const pedestal = document.createElement('img');
@@ -95,6 +110,7 @@ function applyPedestalAnimation(gridItem, img, number, animate = true, savedPede
   gridItem.appendChild(pedestal);
   gridItem.classList.add('pedestal-added');
 
+  // Apply transition to move pedestal into position
   setTimeout(() => {
     pedestal.style.bottom = `${pedestalStopBottom}px`;
   }, 50);
@@ -102,10 +118,12 @@ function applyPedestalAnimation(gridItem, img, number, animate = true, savedPede
   img.style.filter = 'grayscale(100%)';
   img.style.transition = animate ? 'filter 1s ease' : 'none';
 
+  // Add shake animation after the pedestal settles
   setTimeout(() => {
     pedestal.style.animation = 'shake 0.5s ease forwards';
   }, 1050);
 
+  // Inject the shake animation keyframes into the document
   const style = document.createElement('style');
   style.innerHTML = `
     @keyframes shake {
