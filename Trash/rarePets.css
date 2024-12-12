@@ -124,6 +124,22 @@ img {
   .grid-item.clicked img {
     animation: glow 1s infinite alternate; /* Apply glow animation */
   }
+
+    /* Grid container for each section */
+    .grid-container {
+      width: 90%;
+      max-width: 90%;
+      margin-bottom: 15px;
+    }
+    
+    .subTitle {
+      text-align: left;
+      font-size: 1.5rem;
+      margin-left: 10px;
+      margin-bottom: -10px;
+      color: #5d5d5d90; /* Matches hover color */
+      font-weight: bold;
+    }
   
   /* Navbar Styles */
   .navbar {

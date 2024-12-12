@@ -36,7 +36,7 @@
     grid-template-columns: repeat(auto-fill, 110px); /* Creates a responsive grid */
     gap: 30px;
     max-width: 100%; /* Ensures grid is responsive */
-    margin: 20px 0;
+    margin-top: 10px;
     padding: 10px;
     justify-items: start; /* Ensures items are centered within their grid cell */
     align-items: start;
@@ -89,7 +89,7 @@
   .grid-container {
     width: 90%;
     max-width: 90%;
-    margin-bottom: 15px;
+    margin-bottom: 7.5px;
   }
   
   .subTitle {

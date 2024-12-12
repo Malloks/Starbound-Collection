@@ -33,12 +33,13 @@ body {
   /* Universal grid styling */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Creates a responsive grid */
-    gap: 10px; /* Space between grid items */
-    max-width: 90%; /* Ensures grid is responsive */
+    grid-template-columns: repeat(auto-fill, 130px); /* Creates a responsive grid */
+    row-gap: 10px; /* Space between grid items */
+    column-gap: 12px;
     margin: 20px 0;
     padding: 10px;
-    justify-items: center; /* Ensures items are centered within their grid cell */
+    justify-items: start; /* Ensures items are centered within their grid cell */
+    align-items: start;
     grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
     grid-auto-flow: row; /* Forces grid items to flow in rows */
   }
@@ -53,8 +54,8 @@ body {
     position: relative;
     cursor: pointer; /* Makes the items look clickable */
     transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
-    height: 95px; /* Fixed height */
-    width: 95px;  /* Fixed width */
+    height: 92.5px; /* Fixed height */
+    width: 92.5px;  /* Fixed width */
     overflow: hidden; /* Prevents images from overflowing */
     background-color: rgba(148, 148, 148, 0.19);
     box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
@@ -120,6 +121,23 @@ body {
     filter: brightness(0.5) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
   }
   
+  
+    /* Grid container for each section */
+    .grid-container {
+      width: 90%;
+      max-width: 90%;
+      margin-bottom: 15px;
+    }
+    
+    .subTitle {
+      text-align: left;
+      font-size: 1.5rem;
+      margin-left: 10px;
+      margin-bottom: -10px;
+      color: #5d5d5d90; /* Matches hover color */
+      font-weight: bold;
+    }
+
   /* Navbar Styles */
   .navbar {
     color: white;
