@@ -1,23 +1,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const savedState = JSON.parse(localStorage.getItem('vanityItemsStateRevamp')) || {};
-
     const categories = ['Small', 'Medium', 'Large'];
     const baseFolder = 'Fossils';
-
     const gridElements = {
         'Small': document.getElementById('small-grid'),
         'Medium': document.getElementById('medium-grid'),
         'Large': document.getElementById('large-grid')
     };
-
-    // Image Cache
     const imageCache = new Map();
 
     const getImage = async (src) => {
         if (imageCache.has(src)) {
-            return imageCache.get(src).cloneNode(); // Return a clone
+            return imageCache.get(src).cloneNode();
         }
-
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -29,28 +24,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Preload animation frames
     const preloadAnimationFrames = async (animationFolder, totalFrames) => {
         const frameImages = [];
+        const promises = [];
         for (let frame = 1; frame <= totalFrames; frame++) {
             const frameNumber = String(frame).padStart(4, '0');
-            const framePath = `/Images/Animation/${animationFolder}/frame${frameNumber}.png`;
-            frameImages.push(await getImage(framePath)); // Use getImage to cache
+            const framePath = `/Images/Animation/${animationFolder}/frame${frameNumber}.webp`;
+            promises.push(getImage(framePath));
         }
+        await Promise.all(promises).then(images => frameImages.push(...images));
         return frameImages;
     };
 
     let mediumAnimationFrames = [];
     let smallAnimationFrames = [];
     try {
-        mediumAnimationFrames = await preloadAnimationFrames('MediumFossilDone', 40);
-        smallAnimationFrames = await preloadAnimationFrames('SmallFossilDone', 40);
+        await Promise.all([
+            preloadAnimationFrames('MediumFossilDone', 40).then(frames => mediumAnimationFrames = frames),
+            preloadAnimationFrames('SmallFossilDone', 40).then(frames => smallAnimationFrames = frames)
+        ]);
     } catch (error) {
         console.error('Error preloading animation frames:', error);
     }
 
     try {
-        for (const category of categories) {
+        const categoryPromises = categories.map(async category => {
             const grid = gridElements[category];
             grid.setAttribute('data-category', category);
 
@@ -58,20 +56,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error(`Failed to fetch ${category}: ${response.status}`);
 
             const items = await response.json();
-            const itemFolders = [];
+            const itemFolders = items.reduce((acc, path) => {
+                const subPath = path.replace(/^Images\//, '').replace(`${baseFolder}/${category}/`, '').replace(/\/[^/]+\.webp$/, '');
+                if (!acc.includes(subPath)) acc.push(subPath);
+                return acc;
+            }, []);
 
-            items.forEach(path => {
-                const subPath = path
-                    .replace(/^Images\//, '')
-                    .replace(`${baseFolder}/${category}/`, '')
-                    .replace(/\/[^/]+\.png$/, '');
-                if (!itemFolders.includes(subPath)) itemFolders.push(subPath);
-            });
-
-            for (const item of itemFolders) {
+            const itemPromises = itemFolders.map(async item => {
                 const itemResponse = await fetch(`/images?folder=${baseFolder}/${category}/${item}`);
                 if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
-
                 const images = await itemResponse.json();
 
                 const gridItem = document.createElement('div');
@@ -97,22 +90,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     imagesContainer.appendChild(container);
 
                     if (i === 0) {
-                        const mannequin = document.createElement('img');
-                        mannequin.src = `/Images/Misc/${category}Display.png`;
+                        const mannequin = await getImage(`/Images/Misc/${category}Display.webp`);
                         mannequin.alt = 'Mannequin';
                         mannequin.classList.add('set-image');
                         mannequin.style.zIndex = "1";
 
-                        const mannequinDone = document.createElement('img');
-                        mannequinDone.src = `/Images/Misc/${category}DisplayDone.png`;
+                        const mannequinDone = await getImage(`/Images/Misc/${category}DisplayDone.webp`);
                         mannequinDone.alt = 'MannequinDone';
                         mannequinDone.classList.add('set-image');
                         mannequinDone.style.zIndex = "2";
                         mannequinDone.style.opacity = "0";
 
                         if (category === 'Medium') {
-                            const mannequinAdd = document.createElement('img');
-                            mannequinAdd.src = `/Images/Misc/MediumDisplayPole.png`;
+                            const mannequinAdd = await getImage(`/Images/Misc/MediumDisplayPole.webp`);
                             mannequinAdd.alt = 'MannequinAdd';
                             mannequinAdd.classList.add('set-image');
                             mannequinAdd.style.zIndex = "0";
@@ -125,193 +115,120 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         for (let j = 1; j <= pieceCount; j++) {
                             const num = `0${j}`;
-                            const overlayPath = images.find(img => img.includes(`${num}_On.png`));
+                            const overlayPath = images.find(img => img.includes(`${num}_On.webp`));
                             if (!overlayPath) continue;
-
-                            const overlay = document.createElement('img');
-                            overlay.src = `/${overlayPath}`;
+                            const overlay = await getImage(`/${overlayPath}`);
                             overlay.alt = `Overlay ${num}`;
                             overlay.classList.add('set-image');
                             overlay.style.opacity = '0';
                             overlay.style.transition = 'opacity 0.5s ease';
-
                             container.appendChild(overlay);
                             overlayImgs[num] = overlay;
                         }
 
-                        const pathKey = `${category}/${item}`;
-                        const savedPiece = savedState[pathKey];
-
+                        const savedPiece = savedState[`${category}/${item}`];
                         if (savedPiece) {
                             Object.entries(savedPiece).forEach(([num, data]) => {
-                                if (overlayImgs[num]) {
-                                    overlayImgs[num].style.opacity = data.visible ? '1' : '0';
-                                }
+                                if (overlayImgs[num]) overlayImgs[num].style.opacity = data.visible ? '1' : '0';
                             });
-
                             const mannequinDoneElem = container.querySelector('img[alt="MannequinDone"]');
                             const mannequinAddElem = container.querySelector('img[alt="MannequinAdd"]');
                             const allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
-
                             mannequinDoneElem.style.opacity = allVisible ? '1' : '0';
                             if (mannequinAddElem) mannequinAddElem.style.opacity = allVisible ? '0' : '1';
                         }
                     } else {
                         const num = `0${i}`;
-                        const iconPath = images.find(img => img.includes(`${num}.png`));
+                        const iconPath = images.find(img => img.includes(`${num}.webp`));
                         if (!iconPath) continue;
-
-                        const baseImg = document.createElement('img');
-                        baseImg.src = `/${iconPath}`;
+                        const baseImg = await getImage(`/${iconPath}`);
                         baseImg.alt = `Icon ${num}`;
                         baseImg.classList.add('set-image');
                         baseImg.style.filter = 'grayscale(0%)';
                         baseImg.style.transition = 'filter 0.5s ease';
-
-                        const pathKey = `${category}/${item}`;
-                        const savedPiece = savedState[pathKey]?.[num];
-                        if (savedPiece?.grayed) {
-                            baseImg.style.filter = 'grayscale(100%)';
-                        }
-
+                        const savedPiece = savedState[`${category}/${item}`]?.[num];
+                        if (savedPiece?.grayed) baseImg.style.filter = 'grayscale(100%)';
                         container.appendChild(baseImg);
                         iconImgs[num] = baseImg;
 
                         baseImg.addEventListener('click', () => {
                             const overlay = overlayImgs[num];
                             if (!overlay) return;
-
                             const visible = overlay.style.opacity === '1';
                             overlay.style.opacity = visible ? '0' : '1';
                             baseImg.style.filter = visible ? 'grayscale(0%)' : 'grayscale(100%)';
-
+                            const pathKey = `${category}/${item}`;
                             if (!savedState[pathKey]) savedState[pathKey] = {};
-                            savedState[pathKey][num] = {
-                                visible: !visible,
-                                grayed: !visible
-                            };
+                            savedState[pathKey][num] = { visible: !visible, grayed: !visible };
                             localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
 
                             const container1 = gridItem.querySelector('.container-1');
                             const mannequinDone = container1?.querySelector('img[alt="MannequinDone"]');
                             const mannequinAdd = container1?.querySelector('img[alt="MannequinAdd"]');
-
                             const allVisible = Object.keys(overlayImgs).every(key => overlayImgs[key].style.opacity === '1');
                             const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
 
-                            if (category === 'Medium' && mannequinAdd) {
-                                if (allVisible && !wasAllVisibleBeforeClick) {
-                                    let frame = 1;
-
-                                    const interval = setInterval(() => {
-                                        getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(animationImg => {
-                                            animationImg.classList.add('set-image');
-                                            animationImg.style.position = 'absolute';
-                                            animationImg.style.zIndex = '10';
-                                            animationImg.style.left = '65px';
-                                            animationImg.style.top = '35px';
-                                            mannequinAdd.parentElement.appendChild(animationImg);
-                                            setTimeout(() => {
-                                                animationImg.remove();
-                                            }, 20);
-                                        });
-
-                                        frame++;
-
-                                        if (frame > 40) {
-                                            clearInterval(interval);
-                                            mannequinAdd.style.opacity = '0';
-                                            mannequinAdd.style.transition = 'opacity 0.5s ease';
-
-                                            if (mannequinDone) {
-                                                mannequinDone.style.opacity = '1';
-                                            }
-                                        }
-                                    }, 20);
-                                } else if (!allVisible && wasAllVisibleBeforeClick) {
-                                    let frame = 26;
-                                    const interval = setInterval(() => {
-                                        getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(reverseAnimationImg => {
-                                            reverseAnimationImg.classList.add('set-image');
-                                            reverseAnimationImg.style.position = 'absolute';
-                                            reverseAnimationImg.style.zIndex = '10';
-                                            reverseAnimationImg.style.left = '65px';
-                                            reverseAnimationImg.style.top = '35px';
-                                            mannequinAdd.parentElement.appendChild(reverseAnimationImg);
-                                            setTimeout(() => {
-                                                reverseAnimationImg.remove();
-                                            }, 20);
-                                        });
-
-                                        if (frame === 26 && mannequinDone) {
-                                            mannequinDone.style.opacity = '0';
-                                        }
-                                        frame--;
-
-                                        if (frame < 1) {
-                                            clearInterval(interval);
-                                        }
-                                    }, 20);
-                                    mannequinAdd.style.opacity = '1';
-                                    mannequinAdd.style.transition = 'opacity 0.5s ease';
-                                }
-                            } else if (category === 'Small') {
-                                if (allVisible && !wasAllVisibleBeforeClick) {
-                                    let frame = 1;
-                                    const interval = setInterval(() => {
-                                        getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(animationImg => {
-                                            animationImg.classList.add('set-image');
-                                            animationImg.style.position = 'absolute';
-                                            animationImg.style.zIndex = '10';
-                                            animationImg.style.left = '65px';
-                                            animationImg.style.top = '10px';
-                                            mannequinDone.parentElement.appendChild(animationImg);
-                                            setTimeout(() => {
-                                                animationImg.remove();
-                                            }, 20);
-                                        });
-                                        frame++;
-                                        if (frame > 40) {
-                                            clearInterval(interval);
-                                            mannequinDone.style.opacity = '1';
-                                        }
-                                    }, 20);
-                                } else if (!allVisible && wasAllVisibleBeforeClick) {
-                                    let frame = 26;
-                                    const interval = setInterval(() => {
-                                        getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(reverseAnimationImg => {
-                                            reverseAnimationImg.classList.add('set-image');
-                                            reverseAnimationImg.style.position = 'absolute';
-                                            reverseAnimationImg.style.zIndex = '10';
-                                            reverseAnimationImg.style.left = '65px';
-                                            reverseAnimationImg.style.top = '10px';
-                                            mannequinDone.parentElement.appendChild(reverseAnimationImg);
-                                            setTimeout(() => {
-                                                reverseAnimationImg.remove();
-                                            }, 20);
-                                        });
-                                        if (frame === 26) {
-                                            mannequinDone.style.opacity = '0';
-                                        }
-                                        frame--;
-                                        if (frame < 1) {
-                                            clearInterval(interval);
-                                        }
-                                    }, 20);
-                                }
-                            } else {
-                                mannequinDone.style.opacity = allVisible ? '1' : '0';
-                                mannequinDone.style.transition = 'opacity 0.5s ease';
+                            if (category === 'Medium' && mannequinAdd) animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone);
+                            else if (category === 'Small') animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone);
+                            else {
+                                if (mannequinDone) mannequinDone.style.opacity = allVisible ? '1' : '0';
                             }
                         });
                     }
                 }
-
                 gridItem.appendChild(imagesContainer);
                 grid.appendChild(gridItem);
-            }
-        }
+            });
+            await Promise.all(itemPromises);
+        });
+        await Promise.all(categoryPromises);
     } catch (error) {
         console.error('Error loading fossil items:', error);
+    }
+    function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone) {
+        let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
+        const interval = setInterval(async () => {
+            const frameImg = await getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
+            frameImg.classList.add('set-image');
+            frameImg.style.position = 'absolute';
+            frameImg.style.zIndex = '10';
+            frameImg.style.left = '65px';
+            frameImg.style.top = '35px';
+            mannequinAdd.parentElement.appendChild(frameImg);
+            setTimeout(() => frameImg.remove(), 20);
+            if (frame === 26 && mannequinDone) mannequinDone.style.opacity = '0';
+            frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
+            if (frame < 1 || frame > 40) {
+                clearInterval(interval);
+                if (allVisible && !wasAllVisibleBeforeClick) {
+                    mannequinAdd.style.opacity = '0';
+                    mannequinAdd.style.transition = 'opacity 0.5s ease';
+                    if (mannequinDone) mannequinDone.style.opacity = '1';
+                } else if (!allVisible && wasAllVisibleBeforeClick) {
+                    mannequinAdd.style.opacity = '1';
+                    mannequinAdd.style.transition = 'opacity 0.5s ease';
+                }
+            }
+        }, 20);
+    }
+
+    function animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone) {
+        let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
+        const interval = setInterval(async () => {
+            const frameImg = await getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
+            frameImg.classList.add('set-image');
+            frameImg.style.position = 'absolute';
+            frameImg.style.zIndex = '10';
+            frameImg.style.left = '65px';
+            frameImg.style.top = '10px';
+            mannequinDone.parentElement.appendChild(frameImg);
+            setTimeout(() => frameImg.remove(), 20);
+            if (frame === 26) mannequinDone.style.opacity = '0';
+            frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
+            if (frame < 1 || frame > 40) {
+                clearInterval(interval);
+                if (allVisible && !wasAllVisibleBeforeClick) mannequinDone.style.opacity = '1';
+            }
+        }, 20);
     }
 });

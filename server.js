@@ -32,7 +32,7 @@ function getImageFiles(dir) {
     if (stat.isDirectory()) {
       // Recursively get images from subdirectories
       imageFiles = imageFiles.concat(getImageFiles(filePath));
-    } else if (/\.(jpg|jpeg|png|gif)$/i.test(file)) {
+    } else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) {
       // Add image files to the array
       imageFiles.push(filePath);
     }
