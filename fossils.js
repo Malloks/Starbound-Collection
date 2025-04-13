@@ -10,37 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Large': document.getElementById('large-grid')
     };
 
-    const preloadImage = src => {
-        const img = new Image();
-        img.src = src;
-    };
-    
-    const preloadList = [];
-    
-    // Preloading mannequin-related images
-    preloadList.push(
-        '/Images/Misc/SmallDisplay.png',
-        '/Images/Misc/SmallDisplayDone.png',
-        '/Images/Misc/MediumDisplay.png',
-        '/Images/Misc/MediumDisplayDone.png',
-        '/Images/Misc/MediumDisplayPole.png',
-        '/Images/Misc/LargeDisplay.png',
-        '/Images/Misc/LargeDisplayDone.png'
-    );
-    
-    // Preloading animation frames for both Medium and Small Fossil Done animations
-    for (let frame = 1; frame <= 40; frame++) {
-        const frameNumber = String(frame).padStart(4, '0');
-        preloadList.push(`/Images/Animation/MediumFossilDone/frame${frameNumber}.png`);
-        preloadList.push(`/Images/Animation/SmallFossilDone/frame${frameNumber}.png`);
-    }
-    
-    // Preload all images
-    preloadList.forEach(preloadImage);
-    
-
     try {
-        for (const category of categories) {
+        // Use Object.keys to iterate over the keys of the gridElements object
+        for (const category of Object.keys(gridElements)) {
             const grid = gridElements[category];
             grid.setAttribute('data-category', category);
 
@@ -63,12 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
 
                 const images = await itemResponse.json();
-
-                // Preload all images for this item
-                images.forEach(imgPath => preloadImage(`/${imgPath}`));
-                preloadImage(`/Images/Misc/${category}Display.png`);
-                preloadImage(`/Images/Misc/${category}DisplayDone.png`);
-                if (category === 'Medium') preloadImage(`/Images/Misc/MediumDisplayPole.png`);
 
                 const gridItem = document.createElement('div');
                 gridItem.classList.add('grid-item');
@@ -196,6 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
 
                             if (category === 'Medium' && mannequinAdd) {
+                                
+
                                 if (allVisible && !wasAllVisibleBeforeClick) {
                                     const animationImg = document.createElement('img');
                                     animationImg.classList.add('set-image');
@@ -270,18 +238,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     let frame = 1;
                                     const totalFrames = 40;
 
-                                    const interval = setInterval(() => {
+                                    const renderFrame = (frame) => {
                                         const frameNumber = String(frame).padStart(4, '0');
                                         animationImg.src = `/Images/Animation/SmallFossilDone/frame${frameNumber}.png`;
                                         frame++;
-
-                                        if (frame > totalFrames) {
-                                            clearInterval(interval);
+                                        if (frame <= totalFrames) {
+                                            requestAnimationFrame(() => renderFrame(frame));
+                                        } else {
                                             animationImg.remove();
-
                                             mannequinDone.style.opacity = '1';
                                         }
-                                    }, 20);
+                                    };
+                                    
+                                    renderFrame(1);
+                                    
                                 } else if (!allVisible && wasAllVisibleBeforeClick) {
                                     const reverseAnimationImg = document.createElement('img');
                                     reverseAnimationImg.classList.add('set-image');
@@ -321,8 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 grid.appendChild(gridItem);
             }
         }
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error('Error loading fossil items:', error);
     }
 });
-
