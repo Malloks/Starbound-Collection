@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Large': document.getElementById('large-grid')
     };
 
+    const preloadImage = src => {
+        const img = new Image();
+        img.src = src;
+    };
+
     try {
         for (const category of categories) {
             const grid = gridElements[category];
@@ -34,6 +39,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
 
                 const images = await itemResponse.json();
+
+                // Preload all images for this item
+                images.forEach(imgPath => preloadImage(`/${imgPath}`));
+                preloadImage(`/Images/Misc/${category}Display.png`);
+                preloadImage(`/Images/Misc/${category}DisplayDone.png`);
+                if (category === 'Medium') preloadImage(`/Images/Misc/MediumDisplayPole.png`);
 
                 const gridItem = document.createElement('div');
                 gridItem.classList.add('grid-item');
@@ -286,7 +297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 grid.appendChild(gridItem);
             }
         }
-    } catch (error) {
-        console.error('Error loading fossil items:', error);
+    } catch (err) {
+        console.error(err);
     }
 });
+
