@@ -29,22 +29,59 @@ body {
     margin-top: 20px;
     font-size: 2rem;
   }
-  
-  /* Universal grid styling */
-  .grid {
+
+  .grid-container {
+    width: 90%;
+    max-width: 90%;
+    margin-bottom: 15px;
+  }
+
+  .subTitle {
+    text-align: left;
+    font-size: 1.5rem;
+    margin-left: 10px;
+    margin-bottom: -10px;
+    color: #5d5d5d90; /* Matches hover color */
+    font-weight: bold;
+  }
+
+  .grid[data-category="Large"] {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Creates a responsive grid */
-    gap: 10px; /* Space between grid items */
-    max-width: 90%; /* Ensures grid is responsive */
+    grid-template-columns: repeat(auto-fill, 440px); /* Creates a responsive grid */
+    gap: 175px; /* Space between grid items */
+    max-width: 100%; /* Ensures grid is responsive */
     margin: 20px 0;
     padding: 10px;
-    justify-items: center; /* Ensures items are centered within their grid cell */
+    justify-items: start; /* Ensures items are centered within their grid cell */
     grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
     grid-auto-flow: row; /* Forces grid items to flow in rows */
   }
-  
-  /* Grid items (individual box) styling */
-  .grid-item {
+
+  .grid[data-category="Medium"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 130px); /* Creates a responsive grid */
+    gap: 43px; /* Space between grid items */
+    max-width: 100%; /* Ensures grid is responsive */
+    margin: 20px 0;
+    padding: 10px;
+    justify-items: start; /* Ensures items are centered within their grid cell */
+    grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
+    grid-auto-flow: row; /* Forces grid items to flow in rows */
+  }
+
+  .grid[data-category="Small"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 130px); /* Creates a responsive grid */
+    gap: 43px; /* Space between grid items */
+    max-width: 100%; /* Ensures grid is responsive */
+    margin: 20px 0;
+    padding: 10px;
+    justify-items: start; /* Ensures items are centered within their grid cell */
+    grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
+    grid-auto-flow: row; /* Forces grid items to flow in rows */
+  }
+
+  .grid-item[data-category="Large"] {
     border-radius: 8px;
     padding: 50px 10px 10px 10px;
     display: flex;
@@ -52,8 +89,38 @@ body {
     align-items: center;
     position: relative;
     transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
+    height: 240px; /* Fixed height */
+    width: 460px;  /* Fixed width */
+    overflow: hidden; /* Prevents images from overflowing */
+    background-color: rgba(148, 148, 148, 0.19);
+    box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
+  }
+
+  .grid-item[data-category="Medium"] {
+    border-radius: 8px;
+    padding: 45px 10px 50px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
+    height: 165px; /* Fixed height */
+    width: 130px;  /* Fixed width */
+    overflow: hidden; /* Prevents images from overflowing */
+    background-color: rgba(148, 148, 148, 0.19);
+    box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
+  }
+
+  .grid-item[data-category="Small"] {
+    border-radius: 8px;
+    padding: 45px 10px 50px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
     height: 140px; /* Fixed height */
-    width: 180px;  /* Fixed width */
+    width: 130px;  /* Fixed width */
     overflow: hidden; /* Prevents images from overflowing */
     background-color: rgba(148, 148, 148, 0.19);
     box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
@@ -116,13 +183,25 @@ body {
     cursor: pointer;
 }
 
-.container-1 {
+.container-1[data-category="Large"] {
     display: flex;
     bottom: 0px;
-    left: 50%;
-    transform: translateX(-50%);
     height: 100%;
-    width: 55%;
+    width: 90%;
+}
+
+.container-1[data-category="Medium"] {
+    display: flex;
+    bottom: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+.container-1[data-category="Small"] {
+    display: flex;
+    bottom: 0px;
+    height: 100%;
+    width: 100%;
 }
 
 .container-1 img {
@@ -144,68 +223,67 @@ body {
     filter: grayscale(100%);
 }
 
-
-.sub-container-1 {
-    position: absolute;
-    height: 45px;
-    width: 90px;
-    bottom: 0px;
-    background-color: black;
+.container-2[data-category="Large"] {
+    bottom: 2.5%;
+    right: -3px;
+    width: 40px;
+    height: 40px;
 }
 
-.sub-container-2 {
-    position: absolute;
-    height: 45px;
-    width: 90px;
-    bottom: 45px;
-    background-color: black;
+.container-2[data-category="Medium"] {
+    bottom: -45px;
+    left: 2.5%;
+    width: 40px;
+    height: 40px;
 }
 
-.sub-container-3 {
-    position: absolute;
-    height: 45px;
-    width: 90px;
-    top: 0px;
-    background-color: black;
+.container-2[data-category="Small"] {
+    bottom: -45px;
+    right: 35%;
+    width: 40px;
+    height: 40px;
 }
 
-.sub-container-4 {
-    position: absolute;
-    height: 45px;
-    width: 50px;
-    left: 0px;
-    bottom: 45px;
-    background-color: black;
+.container-3[data-category="Large"] {
+    right: -3px;
+    bottom: 22%;
+    width: 40px;
+    height: 40px;
 }
 
-.container-2 {
-    bottom: 5px;
-    right: -5px;
-    width: 21%;
-    height: 27%;
+.container-3[data-category="Medium"] {
+    bottom: -45px;
+    right: 35%;
+    width: 40px;
+    height: 40px;
 }
 
-.container-3 {
-    right: -5px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 21%;
-    height: 27%;
+.container-4[data-category="Large"] {
+    top: 41.5%;
+    right: -3px;
+    width: 40px;
+    height: 40px;
 }
 
-.container-4 {
-    top: 5px;
-    right: -5px;
-    width: 21%;
-    height: 27%;
+.container-4[data-category="Medium"] {
+    bottom: -45px;
+    right: 2.5%;
+    width: 40px;
+    height: 40px;
 }
 
-.container-5 {
-    top: 50%;
-    left: -5px;
-    transform: translateY(-50%);
-    width: 21%;
-    height: 27%;
+.container-5[data-category="Large"] {
+    top: 22%;
+    right: -3px;
+    width: 40px;
+    height: 40px;
+}
+
+.container-6[data-category="Large"] {
+    top: 2.5%;
+    right: -3px;
+    width: 40px;
+    height: 40px;
 }
 
 .set-name {

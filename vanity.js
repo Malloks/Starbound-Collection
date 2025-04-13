@@ -2,42 +2,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM content loaded');
 
     const grid = document.getElementById('grid');
-
-    // Fetch and parse saved states from localStorage
-    const savedState = JSON.parse(localStorage.getItem('vanityItemsState')) || {};
-    console.log('Saved state from localStorage:', savedState);
+    const savedState = JSON.parse(localStorage.getItem('vanityItemsStateRevamp')) || {};
 
     try {
-        // Fetch the subfolders representing image sets
-        const response = await fetch('/images?folder=Vanity');
+        const response = await fetch('/images?folder=Vanity Revamp');
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-        const folders = await response.json(); // Should return a list of folder names
-        console.log('Folders fetched:', folders);
-
+        const folders = await response.json();
         const folderPaths = [];
 
-        // Process folder paths and add them to the folderPaths array
         folders.forEach(folder => {
             const folderPath = folder
-                .replace(/^Images\//, '')                  // Remove "Images/" prefix
-                .replace(/^Vanity\//, '')                 // Remove "Vanity/" prefix
-                .replace(/\/[^/]+\.png$/, '');            // Remove file name at the end
+                .replace(/^Images\//, '')
+                .replace(/^Vanity Revamp\//, '')
+                .replace(/\/[^/]+\.png$/, '');
 
             if (!folderPaths.includes(folderPath)) {
                 folderPaths.push(folderPath);
             }
         });
 
-        console.log('Processed folder paths:', folderPaths);
-
-        // Loop through each folder in the folderPaths array
         for (const folderPath of folderPaths) {
-            const folderResponse = await fetch(`/images?folder=Vanity/${folderPath}`);
+            const folderResponse = await fetch(`/images?folder=Vanity Revamp/${folderPath}`);
             if (!folderResponse.ok) throw new Error(`HTTP error for folder ${folderPath}: ${folderResponse.status}`);
 
-            const images = await folderResponse.json(); // Images in the specific folder
-            console.log(`Images for folder ${folderPath}:`, images);
+            const images = await folderResponse.json();
+            console.log(`Images for ${folderPath}:`, images);
 
             const gridItem = document.createElement('div');
             gridItem.classList.add('grid-item');
@@ -47,140 +37,131 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const setNameDiv = document.createElement('div');
             setNameDiv.classList.add('set-name');
-            setNameDiv.innerText = folderPath; // Using the folder path as the set name
+            setNameDiv.innerText = folderPath;
             gridItem.appendChild(setNameDiv);
 
-            // Create 5 containers for positioning
+            const overlayImgs = {};
+            const baseImgs = {};
+            let mannequinImg = null;
+
             for (let i = 0; i < 5; i++) {
                 const container = document.createElement('div');
                 container.classList.add('container', `container-${i + 1}`);
                 imagesContainer.appendChild(container);
 
-                if (i === 0 && images[i]) {
-                    // First container: Transparent set image + mannequin
-                    const firstImage = document.createElement('img');
-                    firstImage.src = `/${images[i]}`;
-                    firstImage.alt = `Image ${i + 1}`;
-                    firstImage.classList.add('set-image');
-                    firstImage.style.opacity = '0'; // Initial transparency
-                    container.appendChild(firstImage);
-
-                    const mannequinImg = document.createElement('img');
+                if (i === 0) {
+                    mannequinImg = document.createElement('img');
                     mannequinImg.src = '/Images/Misc/Mannequin.png';
-                    mannequinImg.alt = 'Mannequin Image';
+                    mannequinImg.alt = 'Mannequin';
                     mannequinImg.classList.add('set-image');
+                    mannequinImg.style.transition = 'filter 0.5s ease';
                     container.appendChild(mannequinImg);
 
-                    // Check if the mannequin should be hidden (from saved state)
-                    if (savedState[folderPath]?.mannequinHidden) {
-                        firstImage.style.opacity = '1'; // Fully opaque
-                        mannequinImg.style.display = 'none'; // Hide mannequin
-                    }
-                } else if (images[i]) {
-                    // Other containers: clickable images
-                    const img = document.createElement('img');
-                    img.src = `/${images[i]}`;
-                    img.alt = `Image ${i + 1}`;
-                    img.classList.add('set-image');
-                    img.style.filter = savedState[folderPath]?.[i]?.clicked ? 'grayscale(100%)' : 'none';
-                    container.appendChild(img);
+                    for (let j = 1; j <= 4; j++) {
+                        const num = `0${j}`;
+                        const overlayImgPath = images.find(img => img.includes(`${num}_On.png`));
+                        if (!overlayImgPath) continue;
 
-                    img.addEventListener('click', () => handleImageClick(img, i, folderPath, imagesContainer));
+                        const overlayImg = document.createElement('img');
+                        overlayImg.src = `/${overlayImgPath}`;
+                        overlayImg.alt = `Overlay ${num}`;
+                        overlayImg.classList.add('set-image');
+                        overlayImg.style.opacity = '0';
+                        overlayImg.style.transition = 'opacity 0.5s ease';
+
+                        container.appendChild(overlayImg);
+                        overlayImgs[num] = overlayImg;
+                    }
+                } else {
+                    const num = `0${i}`;
+                    const baseImgPath = images.find(img => img.includes(`${num}.png`));
+                    if (!baseImgPath) continue;
+
+                    const baseImg = document.createElement('img');
+                    baseImg.src = `/${baseImgPath}`;
+                    baseImg.alt = `Icon ${num}`;
+                    baseImg.classList.add('set-image');
+                    baseImg.style.transition = 'filter 0.5s ease';
+
+                    baseImgs[num] = baseImg;
+                    container.appendChild(baseImg);
+
+                    const state = savedState[folderPath]?.[num]?.visible ?? false;
+
+                    if (state) {
+                        overlayImgs[num].style.opacity = '1';
+                        baseImg.style.filter = 'grayscale(100%)';
+                    } else {
+                        overlayImgs[num].style.opacity = '0';
+                        baseImg.style.filter = 'grayscale(0%)';
+                    }
+
+                    baseImg.addEventListener('click', () => {
+                        const overlay = overlayImgs[num];
+                        if (!overlay) return;
+
+                        const currentlyVisible = overlay.style.opacity === '1';
+                        overlay.style.opacity = currentlyVisible ? '0' : '1';
+                        baseImg.style.filter = currentlyVisible ? 'grayscale(0%)' : 'grayscale(100%)';
+
+                        if (!savedState[folderPath]) savedState[folderPath] = {};
+                        savedState[folderPath][num] = { visible: !currentlyVisible };
+                        localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
+
+                        // Check if all overlays are visible
+                        const allVisible = ['01', '02', '03', '04'].every(n => savedState[folderPath]?.[n]?. visible);
+                        mannequinImg.src = allVisible ? '/Images/Misc/GoldMannequin.png' : '/Images/Misc/Mannequin.png';
+                    });
                 }
             }
+
+            // Double-check on load if all overlays are active for this set
+            const allVisibleOnLoad = ['01', '02', '03', '04'].every(n => savedState[folderPath]?.[n]?.visible);
+            mannequinImg.src = allVisibleOnLoad ? '/Images/Misc/GoldMannequin.png' : '/Images/Misc/Mannequin.png';
 
             gridItem.appendChild(imagesContainer);
             grid.appendChild(gridItem);
         }
     } catch (error) {
-        console.error('Failed to fetch vanity items:', error);
+        console.error('Failed to fetch vanity revamp items:', error);
     }
 
-    /**
-     * Function to handle image click events
-     */
-    function handleImageClick(img, index, folderPath, imagesContainer) {
-        const isClicked = img.style.filter === 'grayscale(100%)';
-        img.style.filter = isClicked ? 'none' : 'grayscale(100%)';
+    // Drag reveal functionality
+    const observer = new MutationObserver(() => {
+        const container1s = document.querySelectorAll('.container-1');
 
-        const firstImage = imagesContainer.querySelector('.container-1 img:first-child');
-        const mannequin = imagesContainer.querySelector('.container-1 img:last-child');
+        container1s.forEach(container => {
+            const overlays = container.querySelectorAll('img:not([src*="Mannequin"])');
 
-        updateMannequinVisibility(imagesContainer, firstImage, mannequin);
+            overlays.forEach(overlay => {
+                const line = document.createElement('div');
+                line.classList.add('line');
+                container.appendChild(line);
 
-        if (!savedState[folderPath]) {
-            savedState[folderPath] = {};
-        }
-        savedState[folderPath][index] = { clicked: !isClicked };
-        savedState[folderPath].mannequinHidden = checkAllClicked(imagesContainer);
-        localStorage.setItem('vanityItemsState', JSON.stringify(savedState));
-    }
+                let dragging = false;
+                let startY = 0;
 
-    /**
-     * Function to check if all clickable images are clicked
-     */
-    function checkAllClicked(imagesContainer) {
-        const allImages = Array.from(imagesContainer.querySelectorAll('img:not([alt="Mannequin Image"])'));
-        return allImages.slice(1).every(img => img.style.filter === 'grayscale(100%)');
-    }
+                line.addEventListener('mousedown', (e) => {
+                    dragging = true;
+                    startY = e.clientY;
+                    e.preventDefault();
+                });
 
-    /**
-     * Function to update mannequin visibility dynamically
-     */
-    function updateMannequinVisibility(imagesContainer, firstImage, mannequin) {
-        const allClicked = checkAllClicked(imagesContainer);
+                document.addEventListener('mousemove', (e) => {
+                    if (dragging) {
+                        const deltaY = e.clientY - startY;
+                        const newClip = Math.max(0, Math.min(100, (deltaY / container.offsetHeight) * 100));
+                        overlay.style.clipPath = `inset(${100 - newClip}% 0 0 0)`;
+                        startY = e.clientY;
+                    }
+                });
 
-        if (allClicked) {
-            if (firstImage && mannequin) {
-                firstImage.style.opacity = '1'; // Fully opaque
-                mannequin.style.display = 'none'; // Hide mannequin
-            }
-        } else {
-            if (firstImage && mannequin) {
-                mannequin.style.display = ''; // Show mannequin
-                firstImage.style.opacity = '0'; // Restore transparency
-            }
-        }
-    }
-});
-
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM content loaded');
-
-    const grid = document.getElementById('grid');
-    
-    // Existing code to fetch and display images (you can leave this as is)
-    
-    // Add drag functionality to reveal image
-    const containers = document.querySelectorAll('.container');
-    containers.forEach(container => {
-        const image = container.querySelector('img'); // Assuming the first image is the one to reveal
-        const line = document.createElement('div');
-        line.classList.add('line');
-        container.appendChild(line);
-
-        // Variables for dragging
-        let dragging = false;
-        let startY = 0;
-
-        line.addEventListener('mousedown', (e) => {
-            dragging = true;
-            startY = e.clientY;
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (dragging) {
-                const deltaY = e.clientY - startY; // Distance moved
-                const newClip = Math.max(0, Math.min(100, (deltaY / container.offsetHeight) * 100)); // Calculate percentage
-                image.style.clipPath = `inset(${100 - newClip}% 0 0 0)`; // Update the clipping
-
-                startY = e.clientY; // Update startY for continuous dragging
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            dragging = false;
+                document.addEventListener('mouseup', () => {
+                    dragging = false;
+                });
+            });
         });
     });
+
+    observer.observe(document.getElementById('grid'), { childList: true, subtree: true });
 });

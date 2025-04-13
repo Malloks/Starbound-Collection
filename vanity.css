@@ -137,8 +137,13 @@ body {
 }
 
 .set-image {
-    transition: opacity 1s ease-out; /* Smooth opacity transition */
+    transition: opacity 0.3s ease, filter 0.3s ease;
 }
+
+.set-image.grayscale {
+    filter: grayscale(100%);
+}
+
 
 .sub-container-1 {
     position: absolute;
@@ -214,7 +219,7 @@ body {
     z-index: 1;
     text-align: center;
     width: 100%;
-}
+} 
 
 .transparent-image {
     position: absolute;
