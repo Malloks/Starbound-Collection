@@ -10,16 +10,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Large': document.getElementById('large-grid')
     };
 
+    // Image Cache
+    const imageCache = new Map();
+
+    const getImage = async (src) => {
+        if (imageCache.has(src)) {
+            return imageCache.get(src).cloneNode(); // Return a clone
+        }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                imageCache.set(src, img);
+                resolve(img.cloneNode());
+            };
+            img.onerror = reject;
+            img.src = src;
+        });
+    };
+
     // Preload animation frames
     const preloadAnimationFrames = async (animationFolder, totalFrames) => {
         const frameImages = [];
         for (let frame = 1; frame <= totalFrames; frame++) {
             const frameNumber = String(frame).padStart(4, '0');
             const framePath = `/Images/Animation/${animationFolder}/frame${frameNumber}.png`;
-            const img = new Image();
-            img.src = framePath;
-            frameImages.push(img);
-            await new Promise(resolve => img.onload = resolve); // Wait for each image to load
+            frameImages.push(await getImage(framePath)); // Use getImage to cache
         }
         return frameImages;
     };
@@ -188,8 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     let frame = 1;
 
                                     const interval = setInterval(() => {
-                                        if(mediumAnimationFrames[frame-1]){
-                                            const animationImg = mediumAnimationFrames[frame-1].cloneNode();
+                                        getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(animationImg => {
                                             animationImg.classList.add('set-image');
                                             animationImg.style.position = 'absolute';
                                             animationImg.style.zIndex = '10';
@@ -199,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             setTimeout(() => {
                                                 animationImg.remove();
                                             }, 20);
-                                        }
+                                        });
 
                                         frame++;
 
@@ -216,8 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 } else if (!allVisible && wasAllVisibleBeforeClick) {
                                     let frame = 26;
                                     const interval = setInterval(() => {
-                                        if(mediumAnimationFrames[frame-1]){
-                                            const reverseAnimationImg = mediumAnimationFrames[frame-1].cloneNode();
+                                        getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(reverseAnimationImg => {
                                             reverseAnimationImg.classList.add('set-image');
                                             reverseAnimationImg.style.position = 'absolute';
                                             reverseAnimationImg.style.zIndex = '10';
@@ -226,8 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             mannequinAdd.parentElement.appendChild(reverseAnimationImg);
                                             setTimeout(() => {
                                                 reverseAnimationImg.remove();
-                                            },20);
-                                        }
+                                            }, 20);
+                                        });
 
                                         if (frame === 26 && mannequinDone) {
                                             mannequinDone.style.opacity = '0';
@@ -245,8 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 if (allVisible && !wasAllVisibleBeforeClick) {
                                     let frame = 1;
                                     const interval = setInterval(() => {
-                                        if(smallAnimationFrames[frame-1]){
-                                            const animationImg = smallAnimationFrames[frame-1].cloneNode();
+                                        getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(animationImg => {
                                             animationImg.classList.add('set-image');
                                             animationImg.style.position = 'absolute';
                                             animationImg.style.zIndex = '10';
@@ -256,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             setTimeout(() => {
                                                 animationImg.remove();
                                             }, 20);
-                                        }
+                                        });
                                         frame++;
                                         if (frame > 40) {
                                             clearInterval(interval);
@@ -266,8 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 } else if (!allVisible && wasAllVisibleBeforeClick) {
                                     let frame = 26;
                                     const interval = setInterval(() => {
-                                        if(smallAnimationFrames[frame-1]){
-                                            const reverseAnimationImg = smallAnimationFrames[frame-1].cloneNode();
+                                        getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.png`).then(reverseAnimationImg => {
                                             reverseAnimationImg.classList.add('set-image');
                                             reverseAnimationImg.style.position = 'absolute';
                                             reverseAnimationImg.style.zIndex = '10';
@@ -276,8 +288,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             mannequinDone.parentElement.appendChild(reverseAnimationImg);
                                             setTimeout(() => {
                                                 reverseAnimationImg.remove();
-                                            },20);
-                                        }
+                                            }, 20);
+                                        });
                                         if (frame === 26) {
                                             mannequinDone.style.opacity = '0';
                                         }
