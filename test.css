@@ -357,6 +357,54 @@ body {
     text-shadow: 0 2px 10px #e4c464;
 }
 
+/* Slick, modern scrollbar style, with overlay behavior */
+::-webkit-scrollbar {
+    width: 8px; /* Thin scrollbar */
+    background-color: transparent; /* Transparent track */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent dark thumb */
+    border-radius: 4px; /* Rounded corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5); /* Slightly darker on hover */
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent; /* Transparent track */
+}
+
+/* Firefox alternative (less customization) */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255, 255, 255, 0.075) transparent; /* thumb track */
+}
+
+/* Optional: smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Example usage within a div, with overlay behavior */
+.scrollable-div {
+    overflow-y: overlay; /* overlay scrollbar */
+    max-height: 300px; /* Set a maximum height */
+}
+
+/* Example usage applied to body, with overlay behavior */
+body {
+    overflow-y: overlay;
+}
+
+/* Optional: if you still need padding in some cases, you can use it like this */
+.padded-scrollable-div {
+    overflow-y: auto;
+    max-height: 300px;
+    padding-right: 10px;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .navbar-container {

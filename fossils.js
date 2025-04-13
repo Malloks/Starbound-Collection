@@ -36,20 +36,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return frameImages;
     };
 
+    const loadAnimationFrames = async () => {
+        try {
+            await Promise.all([
+                preloadAnimationFrames('MediumFossilDone', 40).then(frames => mediumAnimationFrames = frames),
+                preloadAnimationFrames('SmallFossilDone', 40).then(frames => smallAnimationFrames = frames),
+                preloadAnimationFrames('LargeFossilDone', 60).then(frames => largeAnimationFrames = frames),
+                preloadAnimationFrames('LargeFossilDoneR', 48).then(frames => largeReverseAnimationFrames = frames)
+            ]);
+        } catch (error) {
+            console.error('Error preloading animation frames:', error);
+        }
+    };
+
     let mediumAnimationFrames = [];
     let smallAnimationFrames = [];
     let largeAnimationFrames = [];
     let largeReverseAnimationFrames = [];
-    try {
-        await Promise.all([
-            preloadAnimationFrames('MediumFossilDone', 40).then(frames => mediumAnimationFrames = frames),
-            preloadAnimationFrames('SmallFossilDone', 40).then(frames => smallAnimationFrames = frames),
-            preloadAnimationFrames('LargeFossilDone', 60).then(frames => largeAnimationFrames = frames),
-            preloadAnimationFrames('LargeFossilDoneR', 48).then(frames => largeReverseAnimationFrames = frames)
-        ]);
-    } catch (error) {
-        console.error('Error preloading animation frames:', error);
-    }
 
     try {
         for (const category of categories) {
@@ -86,6 +89,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const overlayImgs = {};
                 const iconImgs = {};
                 const pieceCount = category === 'Small' ? 1 : category === 'Medium' ? 3 : 5;
+
+                let isAnimatingContainer = false; // Container animation flag
+
+                const setContainerAnimationState = (animating) => {
+                    isAnimatingContainer = animating;
+                    Array.from(imagesContainer.querySelectorAll('.set-image')).forEach(img => {
+                        if (img.alt.startsWith('Icon')) {
+                            img.style.cursor = animating ? 'default' : 'pointer';
+                        }
+                    });
+                };
 
                 for (let i = 0; i < pieceCount + 1; i++) {
                     const container = document.createElement('div');
@@ -155,10 +169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         container.appendChild(baseImg);
                         iconImgs[num] = baseImg;
 
-                        baseImg.addEventListener('click', function clickHandler() {
-                            // disable click during animation
-                            baseImg.removeEventListener('click', clickHandler);
+                        let isAnimating = false; // Icon animation flag
 
+                        baseImg.addEventListener('click', function clickHandler() {
+                            if (isAnimatingContainer) return; // Prevent clicks during container animation
+
+                            baseImg.removeEventListener('click', clickHandler);
                             const overlay = overlayImgs[num];
                             if (!overlay) return;
                             const visible = overlay.style.opacity === '1';
@@ -168,27 +184,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (!savedState[pathKey]) savedState[pathKey] = {};
                             savedState[pathKey][num] = { visible: !visible, grayed: !visible };
                             localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
-
                             const container1 = gridItem.querySelector('.container-1');
                             const mannequinDone = container1?.querySelector('img[alt="MannequinDone"]');
                             const mannequinAdd = container1?.querySelector('img[alt="MannequinAdd"]');
-                            const allVisible = Object.keys(overlayImgs).every(key => overlayImgs[key].style.opacity === '1');
+
+                            const savedPiece = savedState[`${category}/${item}`];
+                            let allVisible = true;
+                            if (savedPiece) {
+                                allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
+                            } else {
+                                allVisible = false;
+                            }
+
                             const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
 
                             const animationDoneCallback = () => {
                                 baseImg.addEventListener('click', clickHandler);
+                                isAnimating = false;
+                                setContainerAnimationState(false);
+                            };
+
+                            const startAnimation = () => {
+                                isAnimating = true;
+                                setContainerAnimationState(true);
                             };
 
                             if (category === 'Medium' && mannequinAdd) {
                                 if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                    startAnimation();
                                     animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, animationDoneCallback);
                                 } else {
                                     animationDoneCallback();
                                 }
                             } else if (category === 'Small') {
-                                animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                    startAnimation();
+                                    animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                } else {
+                                    animationDoneCallback();
+                                }
                             } else if (category === 'Large') {
-                                animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                    startAnimation();
+                                    animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                } else {
+                                    animationDoneCallback();
+                                }
                             } else {
                                 if (mannequinDone) mannequinDone.style.opacity = allVisible ? '1' : '0';
                                 animationDoneCallback();
@@ -204,7 +245,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error loading fossil items:', error);
     }
 
+    setTimeout(loadAnimationFrames, 1000);
+
     function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, callback) {
+        if (allVisible && !wasAllVisibleBeforeClick) {
+            mannequinAdd.style.opacity = '0';
+            mannequinAdd.style.transition = 'opacity 0.5s ease';
+        } else if (!allVisible && wasAllVisibleBeforeClick) {
+            mannequinAdd.style.opacity = '1';
+            mannequinAdd.style.transition = 'opacity 0.5s ease';
+        }
+
         let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
         const interval = setInterval(async () => {
             try {
@@ -221,12 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (frame < 1 || frame > 40) {
                     clearInterval(interval);
                     if (allVisible && !wasAllVisibleBeforeClick) {
-                        mannequinAdd.style.opacity = '0';
-                        mannequinAdd.style.transition = 'opacity 0.5s ease';
                         if (mannequinDone) mannequinDone.style.opacity = '1';
-                    } else if (!allVisible && wasAllVisibleBeforeClick) {
-                        mannequinAdd.style.opacity = '1';
-                        mannequinAdd.style.transition = 'opacity 0.5s ease';
                     }
                     callback();
                 }
@@ -237,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }, 20);
     }
-
+    
     function animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, callback) {
         let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
         const interval = setInterval(async () => {
@@ -264,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }, 20);
     }
-
+    
     function animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, callback) {
         let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 48;
         const interval = setInterval(async () => {
