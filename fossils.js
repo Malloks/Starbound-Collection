@@ -38,17 +38,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let mediumAnimationFrames = [];
     let smallAnimationFrames = [];
+    let largeAnimationFrames = [];
+    let largeReverseAnimationFrames = [];
     try {
         await Promise.all([
             preloadAnimationFrames('MediumFossilDone', 40).then(frames => mediumAnimationFrames = frames),
-            preloadAnimationFrames('SmallFossilDone', 40).then(frames => smallAnimationFrames = frames)
+            preloadAnimationFrames('SmallFossilDone', 40).then(frames => smallAnimationFrames = frames),
+            preloadAnimationFrames('LargeFossilDone', 60).then(frames => largeAnimationFrames = frames),
+            preloadAnimationFrames('LargeFossilDoneR', 48).then(frames => largeReverseAnimationFrames = frames)
         ]);
     } catch (error) {
         console.error('Error preloading animation frames:', error);
     }
 
     try {
-        const categoryPromises = categories.map(async category => {
+        for (const category of categories) {
             const grid = gridElements[category];
             grid.setAttribute('data-category', category);
 
@@ -62,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return acc;
             }, []);
 
-            const itemPromises = itemFolders.map(async item => {
+            for (const item of itemFolders) {
                 const itemResponse = await fetch(`/images?folder=${baseFolder}/${category}/${item}`);
                 if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
                 const images = await itemResponse.json();
@@ -151,7 +155,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         container.appendChild(baseImg);
                         iconImgs[num] = baseImg;
 
-                        baseImg.addEventListener('click', () => {
+                        baseImg.addEventListener('click', function clickHandler() {
+                            // disable click during animation
+                            baseImg.removeEventListener('click', clickHandler);
+
                             const overlay = overlayImgs[num];
                             if (!overlay) return;
                             const visible = overlay.style.opacity === '1';
@@ -168,67 +175,122 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const allVisible = Object.keys(overlayImgs).every(key => overlayImgs[key].style.opacity === '1');
                             const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
 
-                            if (category === 'Medium' && mannequinAdd) animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone);
-                            else if (category === 'Small') animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone);
-                            else {
+                            const animationDoneCallback = () => {
+                                baseImg.addEventListener('click', clickHandler);
+                            };
+
+                            if (category === 'Medium' && mannequinAdd) {
+                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                    animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, animationDoneCallback);
+                                } else {
+                                    animationDoneCallback();
+                                }
+                            } else if (category === 'Small') {
+                                animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                            } else if (category === 'Large') {
+                                animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                            } else {
                                 if (mannequinDone) mannequinDone.style.opacity = allVisible ? '1' : '0';
+                                animationDoneCallback();
                             }
                         });
                     }
                 }
                 gridItem.appendChild(imagesContainer);
                 grid.appendChild(gridItem);
-            });
-            await Promise.all(itemPromises);
-        });
-        await Promise.all(categoryPromises);
+            }
+        }
     } catch (error) {
         console.error('Error loading fossil items:', error);
     }
-    function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone) {
+
+    function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, callback) {
         let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
         const interval = setInterval(async () => {
-            const frameImg = await getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
-            frameImg.classList.add('set-image');
-            frameImg.style.position = 'absolute';
-            frameImg.style.zIndex = '10';
-            frameImg.style.left = '65px';
-            frameImg.style.top = '35px';
-            mannequinAdd.parentElement.appendChild(frameImg);
-            setTimeout(() => frameImg.remove(), 20);
-            if (frame === 26 && mannequinDone) mannequinDone.style.opacity = '0';
-            frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
-            if (frame < 1 || frame > 40) {
-                clearInterval(interval);
-                if (allVisible && !wasAllVisibleBeforeClick) {
-                    mannequinAdd.style.opacity = '0';
-                    mannequinAdd.style.transition = 'opacity 0.5s ease';
-                    if (mannequinDone) mannequinDone.style.opacity = '1';
-                } else if (!allVisible && wasAllVisibleBeforeClick) {
-                    mannequinAdd.style.opacity = '1';
-                    mannequinAdd.style.transition = 'opacity 0.5s ease';
+            try {
+                const frameImg = await getImage(`/Images/Animation/MediumFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
+                frameImg.classList.add('set-image');
+                frameImg.style.position = 'absolute';
+                frameImg.style.zIndex = '10';
+                frameImg.style.left = '65px';
+                frameImg.style.top = '35px';
+                mannequinAdd.parentElement.appendChild(frameImg);
+                setTimeout(() => frameImg.remove(), 20);
+                if (frame === 26 && mannequinDone) mannequinDone.style.opacity = '0';
+                frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
+                if (frame < 1 || frame > 40) {
+                    clearInterval(interval);
+                    if (allVisible && !wasAllVisibleBeforeClick) {
+                        mannequinAdd.style.opacity = '0';
+                        mannequinAdd.style.transition = 'opacity 0.5s ease';
+                        if (mannequinDone) mannequinDone.style.opacity = '1';
+                    } else if (!allVisible && wasAllVisibleBeforeClick) {
+                        mannequinAdd.style.opacity = '1';
+                        mannequinAdd.style.transition = 'opacity 0.5s ease';
+                    }
+                    callback();
                 }
+            } catch (error) {
+                console.error("Error loading animation frame:", error);
+                clearInterval(interval);
+                callback();
             }
         }, 20);
     }
 
-    function animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone) {
+    function animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, callback) {
         let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 26;
         const interval = setInterval(async () => {
-            const frameImg = await getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
-            frameImg.classList.add('set-image');
-            frameImg.style.position = 'absolute';
-            frameImg.style.zIndex = '10';
-            frameImg.style.left = '65px';
-            frameImg.style.top = '10px';
-            mannequinDone.parentElement.appendChild(frameImg);
-            setTimeout(() => frameImg.remove(), 20);
-            if (frame === 26) mannequinDone.style.opacity = '0';
-            frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
-            if (frame < 1 || frame > 40) {
+            try {
+                const frameImg = await getImage(`/Images/Animation/SmallFossilDone/frame${String(frame).padStart(4, '0')}.webp`);
+                frameImg.classList.add('set-image');
+                frameImg.style.position = 'absolute';
+                frameImg.style.zIndex = '10';
+                frameImg.style.left = '65px';
+                frameImg.style.top = '10px';
+                mannequinDone.parentElement.appendChild(frameImg);
+                setTimeout(() => frameImg.remove(), 20);
+                if (frame === 26) mannequinDone.style.opacity = '0';
+                frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
+                if (frame < 1 || frame > 40) {
+                    clearInterval(interval);
+                    if (allVisible && !wasAllVisibleBeforeClick) mannequinDone.style.opacity = '1';
+                    callback();
+                }
+            } catch (error) {
+                console.error("Error loading animation frame:", error);
                 clearInterval(interval);
-                if (allVisible && !wasAllVisibleBeforeClick) mannequinDone.style.opacity = '1';
+                callback();
             }
         }, 20);
+    }
+
+    function animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, callback) {
+        let frame = allVisible && !wasAllVisibleBeforeClick ? 1 : 48;
+        const interval = setInterval(async () => {
+            try {
+                if (!allVisible && wasAllVisibleBeforeClick && frame === 48) {
+                    mannequinDone.style.opacity = '0';
+                }
+                const frameImg = await getImage(allVisible && !wasAllVisibleBeforeClick ? `/Images/Animation/LargeFossilDone/frame${String(frame).padStart(4, '0')}.webp` : `/Images/Animation/LargeFossilDoneR/frame${String(frame).padStart(4, '0')}.webp`);
+                frameImg.classList.add('set-image');
+                frameImg.style.position = 'absolute';
+                frameImg.style.zIndex = '10';
+                frameImg.style.left = '216px';
+                frameImg.style.top = '10.5px';
+                mannequinDone.parentElement.appendChild(frameImg);
+                setTimeout(() => frameImg.remove(), 32);
+                frame = allVisible && !wasAllVisibleBeforeClick ? frame + 1 : frame - 1;
+                if (frame < 1 || frame > (allVisible && !wasAllVisibleBeforeClick ? 60 : 48)) {
+                    clearInterval(interval);
+                    if (allVisible && !wasAllVisibleBeforeClick) mannequinDone.style.opacity = '1';
+                    callback();
+                }
+            } catch (error) {
+                console.error("Error loading animation frame:", error);
+                clearInterval(interval);
+                callback();
+            }
+        }, 32);
     }
 });

@@ -47,8 +47,8 @@ body {
 
   .grid[data-category="Large"] {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 440px); /* Creates a responsive grid */
-    gap: 175px; /* Space between grid items */
+    grid-template-columns: repeat(auto-fill, 480px); /* Creates a responsive grid */
+    gap: 7.3%; /* Space between grid items */
     max-width: 100%; /* Ensures grid is responsive */
     margin: 20px 0;
     padding: 10px;
@@ -90,7 +90,7 @@ body {
     position: relative;
     transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
     height: 240px; /* Fixed height */
-    width: 460px;  /* Fixed width */
+    width: 480px;  /* Fixed width */
     overflow: hidden; /* Prevents images from overflowing */
     background-color: rgba(148, 148, 148, 0.19);
     box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
@@ -245,7 +245,7 @@ body {
 
 .container-2[data-category="Large"] {
     bottom: 2.5%;
-    right: -3px;
+    right: -5px;
     width: 40px;
     height: 40px;
 }
@@ -265,7 +265,7 @@ body {
 }
 
 .container-3[data-category="Large"] {
-    right: -3px;
+    right: -5px;
     bottom: 22%;
     width: 40px;
     height: 40px;
@@ -294,14 +294,14 @@ body {
 
 .container-5[data-category="Large"] {
     top: 22%;
-    right: -3px;
+    right: -5px;
     width: 40px;
     height: 40px;
 }
 
 .container-6[data-category="Large"] {
     top: 2.5%;
-    right: -3px;
+    right: -5px;
     width: 40px;
     height: 40px;
 }
