@@ -14,6 +14,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         const img = new Image();
         img.src = src;
     };
+    
+    const preloadList = [];
+    
+    // Preloading mannequin-related images
+    preloadList.push(
+        '/Images/Misc/SmallDisplay.png',
+        '/Images/Misc/SmallDisplayDone.png',
+        '/Images/Misc/MediumDisplay.png',
+        '/Images/Misc/MediumDisplayDone.png',
+        '/Images/Misc/MediumDisplayPole.png',
+        '/Images/Misc/LargeDisplay.png',
+        '/Images/Misc/LargeDisplayDone.png'
+    );
+    
+    // Preloading animation frames for both Medium and Small Fossil Done animations
+    for (let frame = 1; frame <= 40; frame++) {
+        const frameNumber = String(frame).padStart(4, '0');
+        preloadList.push(`/Images/Animation/MediumFossilDone/frame${frameNumber}.png`);
+        preloadList.push(`/Images/Animation/SmallFossilDone/frame${frameNumber}.png`);
+    }
+    
+    // Preload all images
+    preloadList.forEach(preloadImage);
+    
 
     try {
         for (const category of categories) {
