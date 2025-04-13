@@ -10,9 +10,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Large': document.getElementById('large-grid')
     };
 
+    // Preload animation frames
+    const preloadAnimationFrames = async (animationFolder, totalFrames) => {
+        const frameImages = [];
+        for (let frame = 1; frame <= totalFrames; frame++) {
+            const frameNumber = String(frame).padStart(4, '0');
+            const framePath = `/Images/Animation/${animationFolder}/frame${frameNumber}.png`;
+            const img = new Image();
+            img.src = framePath;
+            frameImages.push(img);
+            await new Promise(resolve => img.onload = resolve); // Wait for each image to load
+        }
+        return frameImages;
+    };
+
+    let mediumAnimationFrames = [];
+    let smallAnimationFrames = [];
     try {
-        // Use Object.keys to iterate over the keys of the gridElements object
-        for (const category of Object.keys(gridElements)) {
+        mediumAnimationFrames = await preloadAnimationFrames('MediumFossilDone', 40);
+        smallAnimationFrames = await preloadAnimationFrames('SmallFossilDone', 40);
+    } catch (error) {
+        console.error('Error preloading animation frames:', error);
+    }
+
+    try {
+        for (const category of categories) {
             const grid = gridElements[category];
             grid.setAttribute('data-category', category);
 
@@ -162,29 +184,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
 
                             if (category === 'Medium' && mannequinAdd) {
-                                
-
                                 if (allVisible && !wasAllVisibleBeforeClick) {
-                                    const animationImg = document.createElement('img');
-                                    animationImg.classList.add('set-image');
-                                    animationImg.style.position = 'absolute';
-                                    animationImg.style.zIndex = '10';
-                                    animationImg.style.left = '65px';
-                                    animationImg.style.top = '35px';
-                                    mannequinAdd.parentElement.appendChild(animationImg);
-
                                     let frame = 1;
-                                    const totalFrames = 40;
 
                                     const interval = setInterval(() => {
-                                        const frameNumber = String(frame).padStart(4, '0');
-                                        animationImg.src = `/Images/Animation/MediumFossilDone/frame${frameNumber}.png`;
+                                        if(mediumAnimationFrames[frame-1]){
+                                            const animationImg = mediumAnimationFrames[frame-1].cloneNode();
+                                            animationImg.classList.add('set-image');
+                                            animationImg.style.position = 'absolute';
+                                            animationImg.style.zIndex = '10';
+                                            animationImg.style.left = '65px';
+                                            animationImg.style.top = '35px';
+                                            mannequinAdd.parentElement.appendChild(animationImg);
+                                            setTimeout(() => {
+                                                animationImg.remove();
+                                            }, 20);
+                                        }
+
                                         frame++;
 
-                                        if (frame > totalFrames) {
+                                        if (frame > 40) {
                                             clearInterval(interval);
-                                            animationImg.remove();
-
                                             mannequinAdd.style.opacity = '0';
                                             mannequinAdd.style.transition = 'opacity 0.5s ease';
 
@@ -194,88 +214,76 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         }
                                     }, 20);
                                 } else if (!allVisible && wasAllVisibleBeforeClick) {
-                                    mannequinAdd.style.opacity = '1';
-                                    mannequinAdd.style.transition = 'opacity 0.5s ease';
-
-                                    const reverseAnimationImg = document.createElement('img');
-                                    reverseAnimationImg.classList.add('set-image');
-                                    reverseAnimationImg.style.position = 'absolute';
-                                    reverseAnimationImg.style.zIndex = '10';
-                                    reverseAnimationImg.style.left = '65px';
-                                    reverseAnimationImg.style.top = '35px';
-                                    mannequinAdd.parentElement.appendChild(reverseAnimationImg);
-
                                     let frame = 26;
-
                                     const interval = setInterval(() => {
-                                        const frameNumber = String(frame).padStart(4, '0');
-                                        reverseAnimationImg.src = `/Images/Animation/MediumFossilDone/frame${frameNumber}.png`;
-
-                                        if (frame === 26) {
-                                            if (mannequinDone) {
-                                                mannequinDone.style.opacity = '0';
-                                            }
+                                        if(mediumAnimationFrames[frame-1]){
+                                            const reverseAnimationImg = mediumAnimationFrames[frame-1].cloneNode();
+                                            reverseAnimationImg.classList.add('set-image');
+                                            reverseAnimationImg.style.position = 'absolute';
+                                            reverseAnimationImg.style.zIndex = '10';
+                                            reverseAnimationImg.style.left = '65px';
+                                            reverseAnimationImg.style.top = '35px';
+                                            mannequinAdd.parentElement.appendChild(reverseAnimationImg);
+                                            setTimeout(() => {
+                                                reverseAnimationImg.remove();
+                                            },20);
                                         }
 
+                                        if (frame === 26 && mannequinDone) {
+                                            mannequinDone.style.opacity = '0';
+                                        }
                                         frame--;
 
                                         if (frame < 1) {
                                             clearInterval(interval);
-                                            reverseAnimationImg.remove();
                                         }
                                     }, 20);
+                                    mannequinAdd.style.opacity = '1';
+                                    mannequinAdd.style.transition = 'opacity 0.5s ease';
                                 }
                             } else if (category === 'Small') {
                                 if (allVisible && !wasAllVisibleBeforeClick) {
-                                    const animationImg = document.createElement('img');
-                                    animationImg.classList.add('set-image');
-                                    animationImg.style.position = 'absolute';
-                                    animationImg.style.zIndex = '10';
-                                    animationImg.style.left = '65px';
-                                    animationImg.style.top = '10px';
-                                    mannequinDone.parentElement.appendChild(animationImg);
-
                                     let frame = 1;
-                                    const totalFrames = 40;
-
-                                    const renderFrame = (frame) => {
-                                        const frameNumber = String(frame).padStart(4, '0');
-                                        animationImg.src = `/Images/Animation/SmallFossilDone/frame${frameNumber}.png`;
+                                    const interval = setInterval(() => {
+                                        if(smallAnimationFrames[frame-1]){
+                                            const animationImg = smallAnimationFrames[frame-1].cloneNode();
+                                            animationImg.classList.add('set-image');
+                                            animationImg.style.position = 'absolute';
+                                            animationImg.style.zIndex = '10';
+                                            animationImg.style.left = '65px';
+                                            animationImg.style.top = '10px';
+                                            mannequinDone.parentElement.appendChild(animationImg);
+                                            setTimeout(() => {
+                                                animationImg.remove();
+                                            }, 20);
+                                        }
                                         frame++;
-                                        if (frame <= totalFrames) {
-                                            requestAnimationFrame(() => renderFrame(frame));
-                                        } else {
-                                            animationImg.remove();
+                                        if (frame > 40) {
+                                            clearInterval(interval);
                                             mannequinDone.style.opacity = '1';
                                         }
-                                    };
-                                    
-                                    renderFrame(1);
-                                    
+                                    }, 20);
                                 } else if (!allVisible && wasAllVisibleBeforeClick) {
-                                    const reverseAnimationImg = document.createElement('img');
-                                    reverseAnimationImg.classList.add('set-image');
-                                    reverseAnimationImg.style.position = 'absolute';
-                                    reverseAnimationImg.style.zIndex = '10';
-                                    reverseAnimationImg.style.left = '65px';
-                                    reverseAnimationImg.style.top = '10px';
-                                    mannequinDone.parentElement.appendChild(reverseAnimationImg);
-
                                     let frame = 26;
-
                                     const interval = setInterval(() => {
-                                        const frameNumber = String(frame).padStart(4, '0');
-                                        reverseAnimationImg.src = `/Images/Animation/SmallFossilDone/frame${frameNumber}.png`;
-
+                                        if(smallAnimationFrames[frame-1]){
+                                            const reverseAnimationImg = smallAnimationFrames[frame-1].cloneNode();
+                                            reverseAnimationImg.classList.add('set-image');
+                                            reverseAnimationImg.style.position = 'absolute';
+                                            reverseAnimationImg.style.zIndex = '10';
+                                            reverseAnimationImg.style.left = '65px';
+                                            reverseAnimationImg.style.top = '10px';
+                                            mannequinDone.parentElement.appendChild(reverseAnimationImg);
+                                            setTimeout(() => {
+                                                reverseAnimationImg.remove();
+                                            },20);
+                                        }
                                         if (frame === 26) {
                                             mannequinDone.style.opacity = '0';
                                         }
-
                                         frame--;
-
                                         if (frame < 1) {
                                             clearInterval(interval);
-                                            reverseAnimationImg.remove();
                                         }
                                     }, 20);
                                 }
