@@ -141,22 +141,6 @@ body {
     filter: grayscale(100%); /* Grays out the image */
     cursor: not-allowed; /* Changes the cursor to indicate that it's inactive */
   }
-  
-  /* To make the Capture Pod image appear on top */
-  .capture-pod-image {
-    position: absolute;
-    top: 10;
-    left: 10;
-    right: 10;
-    bottom: 10;
-    z-index: 10; /* Ensure it appears above the original image */
-  }
-  
-  /* When clicked, apply red and glow effect */
-  .grid-item.clicked img {
-    animation: glow 1s forwards; /* Apply glow animation */
-    filter: brightness(0.5) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
-  }
 
   #grid {
     display: flex;
@@ -187,6 +171,7 @@ body {
     height: 100%;
     object-fit: contain; /* Ensure the images fit the container */
     transition: opacity 0.3s ease-in-out; /* Optional transition */
+    
 }
 
 
@@ -199,7 +184,7 @@ body {
     border-radius: 10px;
 }
 
-.container img:hover {
+.container img {
     cursor: pointer;
 }
 
@@ -305,6 +290,28 @@ body {
     width: 40px;
     height: 40px;
 }
+
+.container-2 img:hover,
+.container-3 img:hover,
+.container-4 img:hover,
+.container-5 img:hover,
+.container-6 img:hover {
+    image-rendering: pixelated; /* Or crisp-edges */
+    cursor: pointer;
+    transform: scale(1.07);
+}
+
+/*.container-2,
+.container-3,
+.container-4,
+.container-5,
+.container-6 {
+    outline: 4px solid;
+    outline-color: #3D8191;
+    outline-offset: -5px;
+    border-radius: 12px;
+}
+*/
 
 .set-name {
     position: absolute;

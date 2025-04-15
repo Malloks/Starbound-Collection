@@ -112,7 +112,11 @@ body {
     border-radius: 10px;
 }
 
-.container img:hover {
+.container:hover {
+    outline-offset: -3px; /* Adjust as needed */
+}
+
+.container img {
     cursor: pointer;
 }
 
@@ -123,6 +127,7 @@ body {
     transform: translateX(-50%);
     height: 100%;
     width: 55%;
+    image-rendering: auto;
 }
 
 .container-1 img {
@@ -206,6 +211,12 @@ body {
     transform: translateY(-50%);
     width: 21%;
     height: 27%;
+}
+
+.container-2 img:hover, .container-3 img:hover, .container-4 img:hover, .container-5 img:hover{
+    cursor: pointer;
+    image-rendering: pixelated; /* Or crisp-edges */
+    transform: scale(1.07); /* Increase size by 5% */
 }
 
 .set-name {

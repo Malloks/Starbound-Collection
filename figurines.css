@@ -67,7 +67,6 @@ h1 {
 .grid-item:hover {
   background-color: #444444d8; /* Lighter background on hover */
   transform: scale(1.05); /* Slight zoom effect on hover */
-  text-shadow: 0 2px 10px #e4c4645b;
 }
 
 .grid-item img {
@@ -75,13 +74,15 @@ h1 {
   max-width: 90%;
   max-height: 90%;
   -webkit-filter: drop-shadow(5px 5px 5px #1a1a1a);
-  filter: drop-shadow(5px 5px 5px #1a1a1a);  }
+  filter: drop-shadow(5px 5px 5px #1a1a1a);  
+}
+  
 
 .grid-item span {
   position: absolute;
   top: 10px;
   left: 10px;
-  color: white;
+  color: #5d5d5d90;
   font-size: 1.2rem;
   font-weight: bold;
   margin: 0;

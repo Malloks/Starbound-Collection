@@ -36,7 +36,205 @@ document.addEventListener('DOMContentLoaded', async () => {
         return frameImages;
     };
 
-    const loadAnimationFrames = async () => {
+    let mediumAnimationFrames = [];
+    let smallAnimationFrames = [];
+    let largeAnimationFrames = [];
+    let largeReverseAnimationFrames = [];
+
+    async function loadContainersAndOverlays() {
+        try {
+            for (const category of categories) {
+                const grid = gridElements[category];
+                grid.setAttribute('data-category', category);
+
+                const response = await fetch(`/images?folder=${baseFolder}/${category}`);
+                if (!response.ok) throw new Error(`Failed to fetch ${category}: ${response.status}`);
+
+                const items = await response.json();
+                const itemFolders = items.reduce((acc, path) => {
+                    const subPath = path.replace(/^Images\//, '').replace(`${baseFolder}/${category}/`, '').replace(/\/[^/]+\.webp$/, '');
+                    if (!acc.includes(subPath)) acc.push(subPath);
+                    return acc;
+                }, []);
+
+                for (const item of itemFolders) {
+                    const itemResponse = await fetch(`/images?folder=${baseFolder}/${category}/${item}`);
+                    if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
+                    const images = await itemResponse.json();
+
+                    const gridItem = document.createElement('div');
+                    gridItem.classList.add('grid-item');
+                    gridItem.setAttribute('data-category', category);
+
+                    const imagesContainer = document.createElement('div');
+                    imagesContainer.classList.add('images-container');
+
+                    const setNameDiv = document.createElement('div');
+                    setNameDiv.classList.add('set-name');
+                    setNameDiv.innerText = item;
+                    gridItem.appendChild(setNameDiv);
+
+                    const overlayImgs = {};
+                    const iconImgs = {};
+                    const pieceCount = category === 'Small' ? 1 : category === 'Medium' ? 3 : 5;
+
+                    let isAnimatingContainer = false; // Container animation flag
+
+                    const setContainerAnimationState = (animating) => {
+                        isAnimatingContainer = animating;
+                        Array.from(imagesContainer.querySelectorAll('.set-image')).forEach(img => {
+                            if (img.alt.startsWith('Icon')) {
+                                img.style.cursor = animating ? 'default' : 'pointer';
+                            }
+                        });
+                    };
+
+                    for (let i = 0; i < pieceCount + 1; i++) {
+                        const container = document.createElement('div');
+                        container.classList.add('container', `container-${i + 1}`);
+                        container.setAttribute('data-category', category);
+                        imagesContainer.appendChild(container);
+
+                        if (i === 0) {
+                            const mannequin = await getImage(`/Images/Misc/${category}Display.webp`);
+                            mannequin.alt = 'Mannequin';
+                            mannequin.classList.add('set-image');
+                            mannequin.style.zIndex = "1";
+
+                            const mannequinDone = await getImage(`/Images/Misc/${category}DisplayDone.webp`);
+                            mannequinDone.alt = 'MannequinDone';
+                            mannequinDone.classList.add('set-image');
+                            mannequinDone.style.zIndex = "2";
+                            mannequinDone.style.opacity = "0";
+
+                            if (category === 'Medium') {
+                                const mannequinAdd = await getImage(`/Images/Misc/MediumDisplayPole.webp`);
+                                mannequinAdd.alt = 'MannequinAdd';
+                                mannequinAdd.classList.add('set-image');
+                                mannequinAdd.style.zIndex = "0";
+                                mannequinAdd.style.opacity = '1';
+                                container.appendChild(mannequinAdd);
+                            }
+
+                            container.appendChild(mannequin);
+                            container.appendChild(mannequinDone);
+
+                            for (let j = 1; j <= pieceCount; j++) {
+                                const num = `0${j}`;
+                                const overlayPath = images.find(img => img.includes(`${num}_On.webp`));
+                                if (!overlayPath) continue;
+                                const overlay = await getImage(`/${overlayPath}`);
+                                overlay.alt = `Overlay ${num}`;
+                                overlay.classList.add('set-image');
+                                overlay.style.opacity = '0';
+                                overlay.style.transition = 'opacity 0.5s ease';
+                                container.appendChild(overlay);
+                                overlayImgs[num] = overlay;
+                            }
+
+                            const savedPiece = savedState[`${category}/${item}`];
+                            if (savedPiece) {
+                                Object.entries(savedPiece).forEach(([num, data]) => {
+                                    if (overlayImgs[num]) overlayImgs[num].style.opacity = data.visible ? '1' : '0';
+                                });
+                                const mannequinDoneElem = container.querySelector('img[alt="MannequinDone"]');
+                                const mannequinAddElem = container.querySelector('img[alt="MannequinAdd"]');
+                                const allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
+                                mannequinDoneElem.style.opacity = allVisible ? '1' : '0';
+                                if (mannequinAddElem) mannequinAddElem.style.opacity = allVisible ? '0' : '1';
+                            }
+                        } else {
+                            const num = `0${i}`;
+                            const iconPath = images.find(img => img.includes(`${num}.webp`));
+                            if (!iconPath) continue;
+                            const baseImg = await getImage(`/${iconPath}`);
+                            baseImg.alt = `Icon ${num}`;
+                            baseImg.classList.add('set-image');
+                            baseImg.style.filter = 'grayscale(0%)';
+                            baseImg.style.transition = 'filter 0.5s ease';
+                            const savedPiece = savedState[`${category}/${item}`]?.[num];
+                            if (savedPiece?.grayed) baseImg.style.filter = 'grayscale(100%)';
+                            container.appendChild(baseImg);
+                            iconImgs[num] = baseImg;
+
+                            let isAnimating = false; // Icon animation flag
+
+                            baseImg.addEventListener('click', function clickHandler() {
+                                if (isAnimatingContainer) return; // Prevent clicks during container animation
+
+                                baseImg.removeEventListener('click', clickHandler);
+                                const overlay = overlayImgs[num];
+                                if (!overlay) return;
+                                const visible = overlay.style.opacity === '1';
+                                overlay.style.opacity = visible ? '0' : '1';
+                                baseImg.style.filter = visible ? 'grayscale(0%)' : 'grayscale(100%)';
+                                const pathKey = `${category}/${item}`;
+                                if (!savedState[pathKey]) savedState[pathKey] = {};
+                                savedState[pathKey][num] = { visible: !visible, grayed: !visible };
+                                localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
+                                const container1 = gridItem.querySelector('.container-1');
+                                const mannequinDone = container1?.querySelector('img[alt="MannequinDone"]');
+                                const mannequinAdd = container1?.querySelector('img[alt="MannequinAdd"]');
+
+                                const savedPiece = savedState[`${category}/${item}`];
+                                let allVisible = true;
+                                if (savedPiece) {
+                                    allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
+                                } else {
+                                    allVisible = false;
+                                }
+
+                                const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
+
+                                const animationDoneCallback = () => {
+                                    baseImg.addEventListener('click', clickHandler);
+                                    isAnimating = false;
+                                    setContainerAnimationState(false);
+                                };
+
+                                const startAnimation = () => {
+                                    isAnimating = true;
+                                    setContainerAnimationState(true);
+                                };
+
+                                if (category === 'Medium' && mannequinAdd) {
+                                    if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                        startAnimation();
+                                        animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, animationDoneCallback);
+                                    } else {
+                                        animationDoneCallback();
+                                    }
+                                } else if (category === 'Small') {
+                                    if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                        startAnimation();
+                                        animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                    } else {
+                                        animationDoneCallback();
+                                    }
+                                } else if (category === 'Large') {
+                                    if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
+                                        startAnimation();
+                                        animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
+                                    } else {
+                                        animationDoneCallback();
+                                    }
+                                } else {
+                                    if (mannequinDone) mannequinDone.style.opacity = allVisible ? '1' : '0';
+                                    animationDoneCallback();
+                                }
+                            });
+                        }
+                    }
+                    gridItem.appendChild(imagesContainer);
+                    grid.appendChild(gridItem);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading fossil items:', error);
+        }
+    }
+
+    async function loadAnimations() {
         try {
             await Promise.all([
                 preloadAnimationFrames('MediumFossilDone', 40).then(frames => mediumAnimationFrames = frames),
@@ -47,205 +245,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error preloading animation frames:', error);
         }
-    };
-
-    let mediumAnimationFrames = [];
-    let smallAnimationFrames = [];
-    let largeAnimationFrames = [];
-    let largeReverseAnimationFrames = [];
-
-    try {
-        for (const category of categories) {
-            const grid = gridElements[category];
-            grid.setAttribute('data-category', category);
-
-            const response = await fetch(`/images?folder=${baseFolder}/${category}`);
-            if (!response.ok) throw new Error(`Failed to fetch ${category}: ${response.status}`);
-
-            const items = await response.json();
-            const itemFolders = items.reduce((acc, path) => {
-                const subPath = path.replace(/^Images\//, '').replace(`${baseFolder}/${category}/`, '').replace(/\/[^/]+\.webp$/, '');
-                if (!acc.includes(subPath)) acc.push(subPath);
-                return acc;
-            }, []);
-
-            for (const item of itemFolders) {
-                const itemResponse = await fetch(`/images?folder=${baseFolder}/${category}/${item}`);
-                if (!itemResponse.ok) throw new Error(`Failed to fetch ${item}: ${itemResponse.status}`);
-                const images = await itemResponse.json();
-
-                const gridItem = document.createElement('div');
-                gridItem.classList.add('grid-item');
-                gridItem.setAttribute('data-category', category);
-
-                const imagesContainer = document.createElement('div');
-                imagesContainer.classList.add('images-container');
-
-                const setNameDiv = document.createElement('div');
-                setNameDiv.classList.add('set-name');
-                setNameDiv.innerText = item;
-                gridItem.appendChild(setNameDiv);
-
-                const overlayImgs = {};
-                const iconImgs = {};
-                const pieceCount = category === 'Small' ? 1 : category === 'Medium' ? 3 : 5;
-
-                let isAnimatingContainer = false; // Container animation flag
-
-                const setContainerAnimationState = (animating) => {
-                    isAnimatingContainer = animating;
-                    Array.from(imagesContainer.querySelectorAll('.set-image')).forEach(img => {
-                        if (img.alt.startsWith('Icon')) {
-                            img.style.cursor = animating ? 'default' : 'pointer';
-                        }
-                    });
-                };
-
-                for (let i = 0; i < pieceCount + 1; i++) {
-                    const container = document.createElement('div');
-                    container.classList.add('container', `container-${i + 1}`);
-                    container.setAttribute('data-category', category);
-                    imagesContainer.appendChild(container);
-
-                    if (i === 0) {
-                        const mannequin = await getImage(`/Images/Misc/${category}Display.webp`);
-                        mannequin.alt = 'Mannequin';
-                        mannequin.classList.add('set-image');
-                        mannequin.style.zIndex = "1";
-
-                        const mannequinDone = await getImage(`/Images/Misc/${category}DisplayDone.webp`);
-                        mannequinDone.alt = 'MannequinDone';
-                        mannequinDone.classList.add('set-image');
-                        mannequinDone.style.zIndex = "2";
-                        mannequinDone.style.opacity = "0";
-
-                        if (category === 'Medium') {
-                            const mannequinAdd = await getImage(`/Images/Misc/MediumDisplayPole.webp`);
-                            mannequinAdd.alt = 'MannequinAdd';
-                            mannequinAdd.classList.add('set-image');
-                            mannequinAdd.style.zIndex = "0";
-                            mannequinAdd.style.opacity = '1';
-                            container.appendChild(mannequinAdd);
-                        }
-
-                        container.appendChild(mannequin);
-                        container.appendChild(mannequinDone);
-
-                        for (let j = 1; j <= pieceCount; j++) {
-                            const num = `0${j}`;
-                            const overlayPath = images.find(img => img.includes(`${num}_On.webp`));
-                            if (!overlayPath) continue;
-                            const overlay = await getImage(`/${overlayPath}`);
-                            overlay.alt = `Overlay ${num}`;
-                            overlay.classList.add('set-image');
-                            overlay.style.opacity = '0';
-                            overlay.style.transition = 'opacity 0.5s ease';
-                            container.appendChild(overlay);
-                            overlayImgs[num] = overlay;
-                        }
-
-                        const savedPiece = savedState[`${category}/${item}`];
-                        if (savedPiece) {
-                            Object.entries(savedPiece).forEach(([num, data]) => {
-                                if (overlayImgs[num]) overlayImgs[num].style.opacity = data.visible ? '1' : '0';
-                            });
-                            const mannequinDoneElem = container.querySelector('img[alt="MannequinDone"]');
-                            const mannequinAddElem = container.querySelector('img[alt="MannequinAdd"]');
-                            const allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
-                            mannequinDoneElem.style.opacity = allVisible ? '1' : '0';
-                            if (mannequinAddElem) mannequinAddElem.style.opacity = allVisible ? '0' : '1';
-                        }
-                    } else {
-                        const num = `0${i}`;
-                        const iconPath = images.find(img => img.includes(`${num}.webp`));
-                        if (!iconPath) continue;
-                        const baseImg = await getImage(`/${iconPath}`);
-                        baseImg.alt = `Icon ${num}`;
-                        baseImg.classList.add('set-image');
-                        baseImg.style.filter = 'grayscale(0%)';
-                        baseImg.style.transition = 'filter 0.5s ease';
-                        const savedPiece = savedState[`${category}/${item}`]?.[num];
-                        if (savedPiece?.grayed) baseImg.style.filter = 'grayscale(100%)';
-                        container.appendChild(baseImg);
-                        iconImgs[num] = baseImg;
-
-                        let isAnimating = false; // Icon animation flag
-
-                        baseImg.addEventListener('click', function clickHandler() {
-                            if (isAnimatingContainer) return; // Prevent clicks during container animation
-
-                            baseImg.removeEventListener('click', clickHandler);
-                            const overlay = overlayImgs[num];
-                            if (!overlay) return;
-                            const visible = overlay.style.opacity === '1';
-                            overlay.style.opacity = visible ? '0' : '1';
-                            baseImg.style.filter = visible ? 'grayscale(0%)' : 'grayscale(100%)';
-                            const pathKey = `${category}/${item}`;
-                            if (!savedState[pathKey]) savedState[pathKey] = {};
-                            savedState[pathKey][num] = { visible: !visible, grayed: !visible };
-                            localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
-                            const container1 = gridItem.querySelector('.container-1');
-                            const mannequinDone = container1?.querySelector('img[alt="MannequinDone"]');
-                            const mannequinAdd = container1?.querySelector('img[alt="MannequinAdd"]');
-
-                            const savedPiece = savedState[`${category}/${item}`];
-                            let allVisible = true;
-                            if (savedPiece) {
-                                allVisible = Object.keys(savedPiece).every(key => savedPiece[key].visible);
-                            } else {
-                                allVisible = false;
-                            }
-
-                            const wasAllVisibleBeforeClick = mannequinDone?.style.opacity === '1';
-
-                            const animationDoneCallback = () => {
-                                baseImg.addEventListener('click', clickHandler);
-                                isAnimating = false;
-                                setContainerAnimationState(false);
-                            };
-
-                            const startAnimation = () => {
-                                isAnimating = true;
-                                setContainerAnimationState(true);
-                            };
-
-                            if (category === 'Medium' && mannequinAdd) {
-                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
-                                    startAnimation();
-                                    animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, animationDoneCallback);
-                                } else {
-                                    animationDoneCallback();
-                                }
-                            } else if (category === 'Small') {
-                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
-                                    startAnimation();
-                                    animateSmall(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
-                                } else {
-                                    animationDoneCallback();
-                                }
-                            } else if (category === 'Large') {
-                                if ((allVisible && !wasAllVisibleBeforeClick) || (!allVisible && wasAllVisibleBeforeClick)) {
-                                    startAnimation();
-                                    animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, animationDoneCallback);
-                                } else {
-                                    animationDoneCallback();
-                                }
-                            } else {
-                                if (mannequinDone) mannequinDone.style.opacity = allVisible ? '1' : '0';
-                                animationDoneCallback();
-                            }
-                        });
-                    }
-                }
-                gridItem.appendChild(imagesContainer);
-                grid.appendChild(gridItem);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading fossil items:', error);
     }
 
-    setTimeout(loadAnimationFrames, 1000);
+    await loadContainersAndOverlays();
+    await loadAnimations();
 
     function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, callback) {
         if (allVisible && !wasAllVisibleBeforeClick) {
@@ -293,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 frameImg.style.position = 'absolute';
                 frameImg.style.zIndex = '10';
                 frameImg.style.left = '65px';
-                frameImg.style.top = '10px';
+                frameImg.style.top = '11px';
                 mannequinDone.parentElement.appendChild(frameImg);
                 setTimeout(() => frameImg.remove(), 20);
                 if (frame === 26) mannequinDone.style.opacity = '0';

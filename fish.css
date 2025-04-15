@@ -34,7 +34,7 @@ h1 {
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 110px); /* Creates a responsive grid */
-  gap: 30px;
+  gap: 33px;
   max-width: 100%; /* Ensures grid is responsive */
   margin-top: 10px;
   padding: 10px;
@@ -53,7 +53,7 @@ h1 {
   align-items: center;
   position: relative;
   cursor: pointer; /* Makes the items look clickable */
-  transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
+  transition: background-color 0.5s ease, transform 0.5s ease, filter 0.5s ease; /* Smooth transition */  
   height: 90px; /* Fixed height */
   width: 90px;  /* Fixed width */
   overflow: hidden; /* Prevents images from overflowing */
@@ -65,21 +65,104 @@ h1 {
 .grid-item:hover {
   background-color: #444444d8; /* Lighter background on hover */
   transform: scale(1.05); /* Slight zoom effect on hover */
-  text-shadow: 0 2px 10px #e4c4645b;
 }
 
 .grid-item img {
   object-fit: cover; /* Ensures images fill the fixed box */
-  max-width: 85%;
-  max-height: 85%;
-  -webkit-filter: drop-shadow(5px 5px 5px #1a1a1a);
-  filter: drop-shadow(5px 5px 5px #1a1a1a);  }
+  filter: drop-shadow(5px 5px 5px #1a1a1a);  
+}
+
+/* --- ENSURE THIS IS CORRECT --- */
+.fish {
+  display: block;
+  opacity: 1;
+  transition: opacity 0.4s ease-in-out;
+  z-index: 1;
+  transform: scale(0.7); /* Keep existing scale */
+  /* No align-self needed as wrapper is centered */
+}
+
+/* --- ADD THIS --- */
+.fish-wrapper {
+  position: relative; /* Crucial for bowl positioning */
+  display: inline-block; /* Take space based on content */
+  line-height: 0; /* Prevent extra space below images */
+  transition: transform 0.65s ease-in-out; /* For lifting animation */
+  filter: drop-shadow(5px 5px 5px #1a1a1a);  
+   /* Removed margin-bottom - adjust spacing via grid-item padding or gap */
+}
+
+/* --- ADD THIS --- */
+.triangle {
+  position: absolute;
+  bottom: 5px; /* Adjust as needed */
+  right: 5px;  /* Adjust as needed */
+  width: 15%; /* Example size */
+  height: 15%;/* Example size */
+  /* background: linear-gradient(...) set by JS */
+  z-index: 0; /* Behind fish/bowl */
+  border-bottom-right-radius: 6px;
+}
+
+.fishbowl {
+  position: absolute;
+  /* Position directly on top of the fish */
+  top: 0px;
+  left: 0;
+  /* Make it cover the wrapper (sized by the fish img) */
+  width: 100%;
+  height: 100%;
+  /* Ensure it's above fish */
+  z-index: -1;
+  display: none; /* Initially hidden */
+  transition: top 0.4s ease-out; /* Animate top property */
+  transform: scale(0.7);
+  /* Remove scaling if images are now final size */
+  /* transform: scale(0.7); */ /* REMOVE if not needed */
+  /* Remove bottom alignment */
+  /* bottom: 5px; */ /* REMOVE */
+  /* transform-origin: bottom; */ /* Optional: Keep if shake looks better */
+}
+
+.fishbowl.hidden {
+  display: none !important; /* Important to override inline styles */
+}
+
+.fish-hook {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px; /* Adjust size if needed */
+  height: auto;
+  /* MODIFIED: Start much higher */
+  top: -130px; /* <<-- ADJUST AS NEEDED (More negative = higher) */
+  z-index: 10;
+  transition: top 0.5s ease-in-out;
+  filter: drop-shadow(3px 3px 3px #1a1a1a);
+}
+
+.number {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: #5d5d5d90;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+  z-index: 3;
+}
+
+.grid-item img.fishHook{
+  top:auto;
+  bottom:-150px;
+}
+
 
 .grid-item span {
   position: absolute;
   top: 10px;
   left: 10px;
-  color: white;
+  color: #5d5d5d90;
   font-size: 1.2rem;
   font-weight: bold;
   margin: 0;
@@ -129,7 +212,7 @@ img {
 /* Define the shake animation */
 @keyframes shake {
   0% {
-    transform: rotate(0deg);
+    transform: rotate(0deg);  
   }
   25% {
     transform: rotate(-3deg);
@@ -141,13 +224,28 @@ img {
     transform: rotate(-3deg);
   }
   100% {
-    transform: rotate(0deg);
+    transform: rotate(0deg);  
   }
+}
+
+@keyframes bowlshake {
+  /* Include translateX and scale in every step */
+  0%   { transform: translateY(-15%) scale(0.7) rotate(0deg); }
+  25%  { transform: translateY(-15%) scale(0.7) rotate(-3deg); }
+  50%  { transform: translateY(-15%) scale(0.7) rotate(3deg); }
+  75%  { transform: translateY(-15%) scale(0.7) rotate(-3deg); }
+  100% { transform: translateY(-15%) scale(0.7) rotate(0deg); }
 }
 
 /* Apply the shake animation to the fishbowl */
 .shake {
-  animation: shake 0.35s ease-in-out;
+  animation: shake 0.4s ease-in-out;
+  transform-origin: bottom;
+}
+
+/* Apply the shake animation to the fishbowl */
+.bowlshake {
+  animation: bowlshake 0.4s ease-in-out;
   transform-origin: bottom;
 }
 
