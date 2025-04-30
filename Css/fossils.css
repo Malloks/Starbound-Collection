@@ -337,6 +337,13 @@ body {
     z-index: -1;
 }
 
+.small-animation-gif {
+    position: absolute;
+    pointer-events: none;
+    image-rendering: auto;
+}
+
+
 /* Navbar styles */
 .navbar {
     color: white;
