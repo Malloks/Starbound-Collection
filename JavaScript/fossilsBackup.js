@@ -9,20 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const imageCache = new Map();
 
-    // ↓ NEW: lazy‐loader for icons
-    const iconObserver = new IntersectionObserver((entries, obs) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const imgEl = entry.target;
-          imgEl.src = imgEl.dataset.src;
-          obs.unobserve(imgEl);
-        }
-      }
-    }, {
-      rootMargin: '100px',
-      threshold: 0.1
-    });
-
     // --- getImage function remains the same ---
     const getImage = async (src) => {
         // ... (implementation as before) ...
@@ -65,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return acc;
                  }, []);
 
+
                 // --- helper to throttle N concurrent fetches ---
                 function fetchWithLimit(tasks, limit = 5) {
                   const results = [];
@@ -87,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .catch(() => ({ item, images: [], error: true }))
                 );
               
-                // ↓ REPLACE your old Promise.all(itemDetailPromises) with:
+                // now fetch only 5 at a time
                 const itemDetails = await fetchWithLimit(detailTasks, 5);
 
                 // Process items
@@ -225,27 +212,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     continue; // Skip this icon container if path not found
                                 }
 
-                                // ↓ NEW: create placeholder img & defer actual load
-                                // ↓ NEW: create placeholder img & defer actual load
-                                const baseImg = document.createElement('img');
-                                baseImg.dataset.src = `/${iconPath}`;
-                                baseImg.alt        = `Icon ${num}`;
+                                const baseImg = await getImage(`/${iconPath}`); // Assumes paths start with /Images/...
+                                baseImg.alt = `Icon ${num}`;
                                 baseImg.classList.add('set-image');
-                                // — apply savedState so reloads honor prior grayscaling —
+                                baseImg.style.filter = 'grayscale(0%)';
+                                baseImg.style.transition = 'filter 0.5s ease';
+                                baseImg.style.cursor = 'pointer';
+
+                                // Initialize state (logic unchanged)
                                 const pathKeyIcon = `${category}/${item}`;
                                 const savedIconState = savedState[pathKeyIcon]?.[num];
                                 if (savedIconState?.grayed) {
-                                  baseImg.style.filter = 'grayscale(100%)';
+                                    baseImg.style.filter = 'grayscale(100%)';
                                 } else {
-                                  baseImg.style.filter = 'grayscale(0%)';
+                                    baseImg.style.filter = 'grayscale(0%)';
                                 }
-                                baseImg.style.transition = 'filter 0.5s ease';
-                                baseImg.style.cursor     = 'pointer';
                                 container.appendChild(baseImg);
                                 iconImgs[num] = baseImg;
-                                iconObserver.observe(baseImg);
-                                
-                                // ↑ end lazy‐loader hook
 
                                 let isAnimating = false;
 
@@ -271,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         setContainerAnimationState(true);
                                     };
                                 
-                                    // flip overlay+icon,.persist…
+                                    // flip overlay+icon, persist…
                                     const overlay = overlayImgs[num];
                                     if (!overlay) return;
                                     const wasAllVisibleBeforeClick = mannequinDone.style.opacity === '1';

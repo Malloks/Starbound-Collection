@@ -103,6 +103,16 @@ body {
       filter: brightness(0) invert(1) hue-rotate(180deg) drop-shadow(0 0 20px red) drop-shadow(0 0 30px red);
     }
   }
+
+  /* Add this to your stylesheet */
+.capture-anim-img {
+  /* ensure no filter or box-shadow on the animation itself */
+  filter: none !important;
+  box-shadow: none !important;
+  /* preserve pixel-art sharpness */
+  image-rendering: pixelated;
+}
+
   
   /* To make the Capture Pod image appear on top */
   .capture-pod-image {
