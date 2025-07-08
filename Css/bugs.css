@@ -1,0 +1,189 @@
+/* === match Pets layout: outer wrapper === */
+.grid-container {
+  width: 90%;
+  max-width: 90%;
+  margin: 20px auto 15px;  /* 20px top, centered, 15px bottom */
+}
+
+/* === match Pets layout: inner grid === */
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  row-gap: 10px;
+  column-gap: 12px;
+  margin: 20px 0;
+  padding: 10px;
+  justify-items: start;
+  align-items: start;
+  grid-auto-rows: auto;
+  grid-auto-flow: row;
+}
+
+/* Main bug container */
+.bug-container {
+  position: relative;
+  padding-top: 48px;
+  width: fit-content;
+  height: fit-content;
+  margin-top: 40px;
+  margin-bottom: 60px;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header bar for the bug name */
+.bug-container .set-name {
+  position: absolute;
+  top: 12px;
+  width: 100%;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #5d5d5d;
+  z-index: 10;
+}
+
+/* Container for stacking animations */
+.big-container {
+  position: relative;
+  display: inline-grid;
+  grid-template-areas: "stack";
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+  justify-content: center;
+  align-items: center;
+
+  background-color: #333;
+  border-radius: 10px;
+  margin: 10px;
+
+  width: fit-content;
+  height: fit-content;
+}
+
+/* Stack every animation frame */
+.big-container .animation-frame {
+  grid-area: stack;
+  position: static;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Velvet rope graphic (optional) */
+.bug-container .rope {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: url('/Images/Misc/Rope.png') no-repeat bottom center;
+  background-size: cover;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Icons: three containers, now flowing in a row */
+.container-2,
+.container-3,
+.container-4 {
+  position: static;
+  width: 40px;
+  height: 40px;
+  margin: 0;            /* spacing handled by .icons-row */
+  border-radius: 10px;
+  background-color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Flex‐row to lay out the icons */
+.icons-row {
+  display: flex;
+  justify-content: center;  /* center under the big-container */
+  align-items: center;
+  gap: 31px;                /* space between icons */
+  margin-bottom: 10px;      /* breathing room below */
+}
+
+/* Icon images */
+.container-2 img,
+.container-3 img,
+.container-4 img {
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+  cursor: pointer;
+  image-rendering: pixelated;
+  transition: transform 0.2s ease;
+}
+.container-2 img:hover,
+.container-3 img:hover,
+.container-4 img:hover {
+  transform: scale(1.07);
+}
+
+.container-2:hover,
+.container-3:hover,
+.container-4:hover {
+  border-radius: 10px 10px 10px 10px;
+}
+
+/* Tooltip bubble */
+.icons-row .container {
+  position: relative;       /* anchor for tooltip */
+}
+.icons-row .container .tooltip {
+  display: none;
+  position: absolute;
+  bottom: -135%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #33333399;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+.icons-row .container:hover .tooltip {
+  display: block;
+}
+
+/* Paused state */
+.paused .animation-frame {
+  animation-play-state: paused;
+}
+
+/* center all tooltip text */
+.tooltip {
+  text-align: center;
+}
+
+/* title: lighter gray */
+.tooltip .tooltip-title {
+  color: #5d5d5d;       /* light gray */
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+/* description: darker gray */
+.tooltip .tooltip-desc {
+  color: #4e4e4e;       /* darker gray */
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+

@@ -8,6 +8,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // — Pets nav-link for “all done” glow —
+  const petsLink = document.querySelector('.navbar-links a[href$="pets.html"]');
+  console.log('🐾 petsLink found?', !!petsLink);
+
+  // Helper: check every .grid-item in both grids for .capture-pod
+  function checkAllPets() {
+    const allItems = [
+      ...normalPetsGrid.querySelectorAll('.grid-item'),
+      ...rarePetsGrid  .querySelectorAll('.grid-item')
+    ];
+    const doneCount = allItems.filter(item => item.classList.contains('capture-pod')).length;
+    const allDone   = allItems.length > 0 && doneCount === allItems.length;
+
+    console.log('🐾 checkAllPets:', { total: allItems.length, doneCount, allDone });
+    localStorage.setItem('petsAllDone', allDone ? 'true' : 'false');
+    if (petsLink) petsLink.classList.toggle('completed', allDone);
+  }
+
   const normalPetsKey = 'normalPetsState';
   const rarePetsKey   = 'rarePetsState';
   const savedNormalPetsState = JSON.parse(localStorage.getItem(normalPetsKey)) || {};
@@ -16,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const [normalPetsImages, rarePetsImages] = await Promise.all([
       fetch('/images?folder=Pets/Regular').then(r => r.json()),
-      fetch('/images?folder=Pets/Rare').then(r => r.json())
+      fetch('/images?folder=Pets/Rare')   .then(r => r.json())
     ]);
 
     function createGridItems(images, grid, savedState, stateKey) {
@@ -25,7 +43,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         gridItem.classList.add('grid-item');
         gridItem.dataset.index = index;
         gridItem.style.position = 'relative';
-        gridItem._isAnimating = false; // click-lock flag
+
+        gridItem._isAnimating = false;
+        gridItem._hovering    = false;
 
         const img = document.createElement('img');
         img.src = src;
@@ -37,12 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         gridItem.append(img, number);
         grid.appendChild(gridItem);
 
-        // — restore state on load —
+        // Restore captured state
         if (savedState[index]?.capturePod) {
-          // pet shrunk & circle, but hidden under the pod
           img.style.transform    = 'scale(0.5)';
           img.style.borderRadius = '50%';
-          img.style.opacity      = '0';           // ← force hidden
+          img.style.opacity      = '0';
           img.style.transition   = 'none';
 
           const pod = document.createElement('img');
@@ -53,41 +72,58 @@ document.addEventListener('DOMContentLoaded', async () => {
           gridItem.classList.add('capture-pod');
         }
 
+        // Hover handlers (unchanged) …
+        gridItem.addEventListener('mouseenter', () => {
+          gridItem._hovering = true;
+          if (gridItem.classList.contains('capture-pod') && !gridItem._isAnimating) {
+            const overlay = document.createElement('img');
+            overlay.src = src;
+            overlay.alt = 'Pet Preview';
+            overlay.classList.add('hover-overlay');
+            gridItem.appendChild(overlay);
+            gridItem._hoverOverlay = overlay;
+          }
+        });
+        gridItem.addEventListener('mouseleave', () => {
+          gridItem._hovering = false;
+          if (gridItem._hoverOverlay) {
+            gridItem._hoverOverlay.remove();
+            delete gridItem._hoverOverlay;
+          }
+        });
+
+        // Click to toggle capture + preview
         gridItem.addEventListener('click', () => {
           if (gridItem._isAnimating) return;
           gridItem._isAnimating = true;
 
-          // temporarily strip any parent filter
+          if (gridItem._hoverOverlay) {
+            gridItem._hoverOverlay.remove();
+            delete gridItem._hoverOverlay;
+          }
+
           const origFilter = gridItem.style.filter;
           gridItem.style.filter = 'none';
 
-          const hasPod   = gridItem.classList.contains('capture-pod');
-          const animImg  = document.createElement('img');
-          const duration = 1000; // your .webp length
-          const filterDur = duration;
-          const morphDur  = 500; // circle-morph time
+          const hasPod = gridItem.classList.contains('capture-pod');
+          const animImg = document.createElement('img');
+          const duration = 1000, filterDur = duration, morphDur = 500;
 
           Object.assign(animImg.style, {
-            position:       'absolute',
-            left:           '10%',
-            top:            '10%',
-            width:          '80%',
-            height:         '80%',
-            pointerEvents:  'none',
-            zIndex:         0,
-            imageRendering: 'pixelated',
-            filter:         'none',
-            boxShadow:      'none'
+            position: 'absolute', left: '10%', top: '10%',
+            width: '80%', height: '80%', pointerEvents: 'none',
+            zIndex: 0, imageRendering: 'pixelated',
+            filter: 'none', boxShadow: 'none'
           });
           animImg.classList.add('capture-anim-img');
 
           if (!hasPod) {
-            // ▶ PLAY FORWARD
+            // ▶ forward
             animImg.src = `Images/Animation/CaptureAnim.webp?reload=${Date.now()}`;
             gridItem.appendChild(animImg);
 
-            img.style.position = 'relative';
-            img.style.zIndex   = 1;
+            img.style.position   = 'relative';
+            img.style.zIndex     = 1;
             img.style.transition = [
               `transform ${morphDur}ms ease`,
               `border-radius ${morphDur}ms ease`,
@@ -98,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             img.style.filter       = 'saturate(0%) brightness(5000%)';
 
             setTimeout(() => {
-              // after anim
+              // finalize capture
               img.style.opacity = 0;
               const pod = document.createElement('img');
               pod.src = 'Images/Misc/Capture_Pod.png';
@@ -107,17 +143,28 @@ document.addEventListener('DOMContentLoaded', async () => {
               gridItem.appendChild(pod);
               gridItem.classList.add('capture-pod');
 
+              if (gridItem._hovering) {
+                const overlay = document.createElement('img');
+                overlay.src = src;
+                overlay.alt = 'Pet Preview';
+                overlay.classList.add('hover-overlay');
+                gridItem.appendChild(overlay);
+                gridItem._hoverOverlay = overlay;
+              }
+
               animImg.remove();
               savedState[index] = { capturePod: true };
               localStorage.setItem(stateKey, JSON.stringify(savedState));
 
-              // restore parent filter & unlock
               gridItem.style.filter = origFilter;
               gridItem._isAnimating = false;
+
+              // ← call here after every state change
+              checkAllPets();
             }, duration);
 
           } else {
-            // ◀ PLAY REVERSE
+            // ◀ reverse
             const pod = gridItem.querySelector('.capture-pod-image');
             if (pod) pod.remove();
             gridItem.classList.remove('capture-pod');
@@ -125,9 +172,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             animImg.src = `Images/Animation/CaptureAnimR.webp?reload=${Date.now()}`;
             gridItem.appendChild(animImg);
 
-            img.style.position = 'relative';
-            img.style.zIndex   = 1;
-            img.style.opacity  = 1;
+            img.style.position   = 'relative';
+            img.style.zIndex     = 1;
+            img.style.opacity    = 1;
             img.style.transition = [
               `transform ${morphDur}ms ease`,
               `border-radius ${morphDur}ms ease`,
@@ -145,6 +192,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
               gridItem.style.filter = origFilter;
               gridItem._isAnimating = false;
+
+              // ← call here after every state change
+              checkAllPets();
             }, duration);
           }
         });
@@ -154,6 +204,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     createGridItems(normalPetsImages, normalPetsGrid, savedNormalPetsState, normalPetsKey);
     createGridItems(rarePetsImages,   rarePetsGrid,   savedRarePetsState,   rarePetsKey);
 
+    // ← initial check once all items are rendered/restored
+    checkAllPets();
   } catch (e) {
     console.error('Failed to load pets:', e);
   }

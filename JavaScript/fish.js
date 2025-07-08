@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const titleEl = document.getElementById('page-title');
+    if (!titleEl) console.warn('No title element to mark completed');
     const oceanGrid = document.getElementById('ocean-grid');
     const toxicGrid = document.getElementById('toxic-grid');
     const arcticGrid = document.getElementById('arctic-grid');
@@ -59,6 +61,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const toxicImages = await toxicImagesResponse.json();
         const arcticImages = await arcticImagesResponse.json();
         const lavaImages = await lavaImagesResponse.json();
+
+        // Checks every grid-item against savedState to see if they've all been caught
+        function checkAllCaught() {
+          const allItems = document.querySelectorAll('.grid-item');
+          const allCaught = Array.from(allItems).every(item => {
+            const stateId = `${item.dataset.folder}_${item.dataset.index}`;
+            return savedState[stateId] && savedState[stateId].hasFishbowl;
+          });
+        
+          // Toggle the page-title
+          titleEl.classList.toggle('completed', allCaught);
+        
+          // Toggle the Fish link in the navbar
+          const fishNavLink = document.getElementById('nav-fish');
+          if (fishNavLink) {
+            fishNavLink.classList.toggle('completed', allCaught);
+          }
+        }
 
         // Function to create grid items
         function createGridItems(images, grid, folderName) {
@@ -163,12 +183,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         gridItem.classList.add('animating');
                         fishbowlImage.style.top = '-100px';
                         setTimeout(() => fishbowlImage.style.display = 'none', 700);
-                        fishbowlImage.style.top = '100px';
+                        fishbowlImage.style.top = '120px';
                         setTimeout(() => fishbowlImage.style.display = 'block', 300);
                         img.style.opacity = '1';
                         fishWrapper.classList.remove('shake');
                         fishbowlImage.classList.remove('bowlshake');
                         savedState[stateId] = { hasFishbowl: false };
+                        checkAllCaught();
                         localStorage.setItem(savedStateKey, JSON.stringify(savedState));
                         setTimeout(() => {
                             gridItem.classList.remove('animating'); // Reset cursor after animation
@@ -214,6 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         }, SHAKE_DURATION);
 
                                         savedState[stateId] = { hasFishbowl: true };
+                                        checkAllCaught();
                                         localStorage.setItem(savedStateKey, JSON.stringify(savedState));
 
                                     }, DROP_DURATION);
@@ -230,6 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         createGridItems(toxicImages, toxicGrid, 'Toxic');
         createGridItems(arcticImages, arcticGrid, 'Arctic');
         createGridItems(lavaImages, lavaGrid, 'Lava');
+        checkAllCaught();
 
     } catch (error) {
         console.error('Failed to initialize fish grids:', error);

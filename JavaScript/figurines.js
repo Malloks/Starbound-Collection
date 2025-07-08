@@ -1,33 +1,49 @@
+// pets.js
+// pets.js
 document.addEventListener('DOMContentLoaded', async () => {
   const normalGrid = document.getElementById('normal-grid');
-  const bossGrid = document.getElementById('boss-grid');
-  const oreGrid = document.getElementById('ore-grid');
+  const bossGrid   = document.getElementById('boss-grid');
+  const oreGrid    = document.getElementById('ore-grid');
 
   if (!normalGrid || !bossGrid || !oreGrid) {
     console.error('Error: Grids not found in the HTML');
     return;
   }
 
-  // Separate keys for each grid
+  // Nav-link we’ll toggle when everything’s collected:
+  const navLink = document.querySelector('.navbar-links a[href$="figurines.html"]');
+
+  // storage keys
   const normalStateKey = 'gridStateNormal';
-  const bossStateKey = 'gridStateBosses';
-  const oreStateKey = 'gridStateOres';
+  const bossStateKey   = 'gridStateBosses';
+  const oreStateKey    = 'gridStateOres';
 
   const savedNormalState = JSON.parse(localStorage.getItem(normalStateKey)) || {};
-  const savedBossState = JSON.parse(localStorage.getItem(bossStateKey)) || {};
-  const savedOreState = JSON.parse(localStorage.getItem(oreStateKey)) || {};
+  const savedBossState   = JSON.parse(localStorage.getItem(bossStateKey))   || {};
+  const savedOreState    = JSON.parse(localStorage.getItem(oreStateKey))    || {};
 
+  // ── 1) all-done checker ─────────────────────────────────
+  function checkAllFigurines() {
+    const allItems = [
+      ...normalGrid.querySelectorAll('.grid-item'),
+      ...bossGrid  .querySelectorAll('.grid-item'),
+      ...oreGrid   .querySelectorAll('.grid-item')
+    ];
+    const allDone = allItems.length > 0
+      && allItems.every(item => item.classList.contains('pedestal-added'));
+
+    localStorage.setItem('figurinesAllDone', allDone ? 'true' : 'false');
+    if (navLink) navLink.classList.toggle('completed', allDone);
+  }
+
+  // ── 2) grid-builder ────────────────────────────────────
   try {
-    // Fetch images from different folders
-    const normalImagesResponse = await fetch('/images?folder=Figurines/Normal');
-    const bossImagesResponse = await fetch('/images?folder=Figurines/Bosses');
-    const oreImagesResponse = await fetch('/images?folder=Figurines/Ores');
+    const [normalImages, bossImages, oreImages] = await Promise.all([
+      fetch('/images?folder=Figurines/Normal').then(r => r.json()),
+      fetch('/images?folder=Figurines/Bosses').then(r => r.json()),
+      fetch('/images?folder=Figurines/Ores').then(r => r.json())
+    ]);
 
-    const normalImages = await normalImagesResponse.json();
-    const bossImages = await bossImagesResponse.json();
-    const oreImages = await oreImagesResponse.json();
-
-    // Function to create grid items
     function createGridItems(images, grid, folderName, savedState, stateKey) {
       images.forEach((src, index) => {
         const gridItem = document.createElement('div');
@@ -44,29 +60,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         gridItem.appendChild(img);
         gridItem.appendChild(number);
 
-        // If there's a saved state for this index, restore the pedestal state
-        if (savedState[index] && savedState[index].pedestalAdded) {
+        // restore “collected” state:
+        if (savedState[index]?.pedestalAdded) {
           const pedestalImage = getPedestalImage(folderName);
-          applyPedestalAnimation(gridItem, img, number, false, savedState[index].pedestalPosition, pedestalImage);
+          applyPedestalAnimation(gridItem, img, number, false,
+                                 savedState[index].pedestalPosition,
+                                 pedestalImage);
+          requestAnimationFrame(() => {
+            img.style.transition = 'filter 1s ease';
+            img.style.filter     = 'grayscale(100%)';
+          });
         }
 
-        // Add click event to toggle pedestal
         gridItem.addEventListener('click', function () {
-          const pedestalImage = getPedestalImage(folderName);
+          if (this._clickLock) return;
+          this._clickLock = true;
+          setTimeout(() => { this._clickLock = false; }, 500);
 
+          const pedestalImage = getPedestalImage(folderName);
           if (this.classList.contains('pedestal-added')) {
             removePedestalAnimation(this, img, number);
-            savedState[this.dataset.index] = { pedestalAdded: false, pedestalPosition: null };
+            savedState[index] = { pedestalAdded: false, pedestalPosition: null };
           } else {
             applyPedestalAnimation(this, img, number, true, null, pedestalImage);
             const pedestalPosition = -(60 - img.offsetTop);
-            savedState[this.dataset.index] = { pedestalAdded: true, pedestalPosition };
+            savedState[index] = { pedestalAdded: true, pedestalPosition };
           }
-          // Save the updated state to localStorage for the specific subchapter
+
           localStorage.setItem(stateKey, JSON.stringify(savedState));
+          checkAllFigurines();     // ←── call after each state change
         });
 
-        // Append to the appropriate grid based on folder
+        // append to correct grid
         if (folderName === 'Bosses') {
           bossGrid.appendChild(gridItem);
         } else if (folderName === 'Ores') {
@@ -77,81 +102,91 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Create grid items for each category
     createGridItems(normalImages, normalGrid, 'Normal', savedNormalState, normalStateKey);
-    createGridItems(bossImages, bossGrid, 'Bosses', savedBossState, bossStateKey);
-    createGridItems(oreImages, oreGrid, 'Ores', savedOreState, oreStateKey);
+    createGridItems(bossImages,   bossGrid,   'Bosses', savedBossState,   bossStateKey);
+    createGridItems(oreImages,    oreGrid,    'Ores',    savedOreState,    oreStateKey);
 
+    checkAllFigurines(); // ←── initial check once all items are in the DOM
   } catch (error) {
     console.error('Failed to fetch images:', error);
   }
 });
 
+// (the rest of your helper functions — getPedestalImage, applyPedestalAnimation, removePedestalAnimation — remain unchanged)
+
 function getPedestalImage(folderName) {
-  if (folderName === 'Ores') {
-    return 'Images/Misc/OrePedistal.png';
-  } else if (folderName === 'Bosses') {
-    return 'Images/Misc/BossPedistal.png';
-  } else {
-    return 'Images/Misc/Pedistal.png';
-  }
+  if (folderName === 'Ores')    return 'Images/Misc/OrePedistal.png';
+  if (folderName === 'Bosses')  return 'Images/Misc/BossPedistal.png';
+  return 'Images/Misc/Pedistal.png';
 }
 
 function applyPedestalAnimation(gridItem, img, number, animate = true, savedPedestalPosition = null, pedestalImage) {
   const pedestal = document.createElement('img');
   pedestal.src = pedestalImage;
   pedestal.alt = 'Pedestal';
-  pedestal.style.position = 'absolute';
-  pedestal.style.zIndex = '-1';
-  pedestal.style.left = '50%';
-  pedestal.style.transform = 'translateX(-50%)';
-  pedestal.style.filter = 'grayscale(100%)';
-  pedestal.style.transition = animate ? 'bottom 1s ease, filter 1s ease' : 'none';
+  Object.assign(pedestal.style, {
+    position:   'absolute',
+    zIndex:     '-1',
+    left:       '50%',
+    transform:  'translateX(-50%)',
+    filter:     'grayscale(100%)',
+    transition: animate ? 'bottom 1s ease' : 'none'
+  });
 
   gridItem.style.position = 'relative';
-  const pedestalStartBottom = -80;
-  const pedestalStopBottom = savedPedestalPosition !== null ? savedPedestalPosition : -(60 - img.offsetTop);
+  const startBottom = -80;
+  const stopBottom  = savedPedestalPosition != null
+                     ? savedPedestalPosition
+                     : -(60 - img.offsetTop);
 
-  pedestal.style.bottom = `${pedestalStartBottom}px`;
-
+  pedestal.style.bottom = `${startBottom}px`;
   gridItem.appendChild(pedestal);
   gridItem.classList.add('pedestal-added');
 
-  // Apply transition to move pedestal into position
-  setTimeout(() => {
-    pedestal.style.bottom = `${pedestalStopBottom}px`;
-  }, 50);
+  // drop pedestal
+  setTimeout(() => pedestal.style.bottom = `${stopBottom}px`, 50);
 
-  img.style.filter = 'grayscale(100%)';
-  img.style.transition = animate ? 'filter 1s ease' : 'none';
+  // only fade image when animate===true
+  if (animate) {
+    img.style.transition = 'filter 1s ease';
+    img.style.filter     = 'grayscale(100%)';
+  }
 
-  // Add shake animation after the pedestal settles
+  // inject shake keyframes once
+  if (!document.getElementById('shake-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'shake-keyframes';
+    style.textContent = `
+      @keyframes shake {
+        0%   { transform: translateX(-50%) translateX(0); }
+        25%  { transform: translateX(-50%) translateX(-1px); }
+        50%  { transform: translateX(-50%) translateX(1px); }
+        75%  { transform: translateX(-50%) translateX(-1px); }
+        100% { transform: translateX(-50%) translateX(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // shake after landing
   setTimeout(() => {
     pedestal.style.animation = 'shake 0.5s ease forwards';
   }, 1050);
-
-  // Inject the shake animation keyframes into the document
-  const style = document.createElement('style');
-  style.innerHTML = `@keyframes shake { 0% { transform: translateX(-50%) translateX(0); } 25% { transform: translateX(-50%) translateX(-1px); } 50% { transform: translateX(-50%) translateX(1px); } 75% { transform: translateX(-50%) translateX(-1px); } 100% { transform: translateX(-50%) translateX(0); } }`;
-  document.head.appendChild(style);
 }
 
 function removePedestalAnimation(gridItem, img, number) {
   const pedestal = gridItem.querySelector('img[alt="Pedestal"]');
   if (pedestal) {
-    const imgBottom = img.offsetTop + img.offsetHeight;
-    const pedestalStartBottom = -(imgBottom + 50);
-
-    pedestal.style.bottom = `${pedestalStartBottom}px`;
+    const imgBottom       = img.offsetTop + img.offsetHeight;
+    const offscreenBottom = -(imgBottom + 50);
     pedestal.style.transition = 'bottom 1s ease';
-
-    setTimeout(() => {
-      pedestal.remove();
-    }, 1000);
+    pedestal.style.bottom     = `${offscreenBottom}px`;
+    setTimeout(() => pedestal.remove(), 1000);
   }
 
-  img.style.filter = 'none';
+  // fade back to color
   img.style.transition = 'filter 1s ease';
+  img.style.filter     = 'none';
 
   gridItem.classList.remove('pedestal-added');
 }

@@ -1,98 +1,124 @@
+// food.js
 document.addEventListener('DOMContentLoaded', async () => {
-    const foodGrids = {
-        'Main': document.getElementById('main-grid'),
-        'Side': document.getElementById('side-grid'),
-        'Dessert': document.getElementById('dessert-grid'),
-        'Snack': document.getElementById('snack-grid'),
-        'Drink': document.getElementById('drink-grid'),
-        'Condiment': document.getElementById('condiment-grid')
-    };
+  const foodGrids = {
+    'Main':     document.getElementById('main-grid'),
+    'Side':     document.getElementById('side-grid'),
+    'Dessert':  document.getElementById('dessert-grid'),
+    'Snack':    document.getElementById('snack-grid'),
+    'Drink':    document.getElementById('drink-grid'),
+    'Condiment':document.getElementById('condiment-grid')
+  };
 
-    let globalCounter = 1;
-    const eatenItems = new Set(JSON.parse(localStorage.getItem('eatenItems')) || []);
+  // Load eatenItems from localStorage
+  const eatenItems = new Set(JSON.parse(localStorage.getItem('eatenItems')) || []);
 
-    async function loadFoodImages(category, gridElement) {
-        if (!gridElement) {
-            console.error(`Error: Grid element for '${category}' not found.`);
+  // Nav‐link for “all done” glow
+  const foodLink = document.querySelector('.navbar-links a[href$="food.html"]');
+  console.log('🍔 foodLink found?', !!foodLink);
+
+  // Helper: check every grid‐item across all categories
+  function checkAllFood() {
+    const allItems = Object.values(foodGrids).reduce((acc, grid) => {
+      if (grid) acc.push(...grid.querySelectorAll('.grid-item'));
+      return acc;
+    }, []);
+    const allDone = allItems.length > 0
+      && allItems.every(item => {
+           const imgName = item.querySelector('img').src.split('/').pop();
+           return eatenItems.has(imgName);
+         });
+
+    console.log('🍔 checkAllFood:', { total: allItems.length, eaten: eatenItems.size, allDone });
+    localStorage.setItem('foodAllDone', allDone ? 'true' : 'false');
+    if (foodLink) foodLink.classList.toggle('completed', allDone);
+  }
+
+  let globalCounter = 1;
+
+  async function loadFoodImages(category, gridElement) {
+    if (!gridElement) {
+      console.error(`Error: Grid element for '${category}' not found.`);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/images?folder=Food/${category}`);
+      if (!res.ok) throw new Error(`Failed to fetch images for ${category}`);
+      const images = await res.json();
+
+      images.forEach(imageSrc => {
+        const imageName = imageSrc.split('/').pop();
+        const gridItem = document.createElement('div');
+        gridItem.classList.add('grid-item');
+
+        let isAnimating = false;
+        let isEmpty     = eatenItems.has(imageName);
+
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.alt = `${category} ${globalCounter}`;
+        img.style.opacity = isEmpty ? '0' : '1';
+        img.style.cursor  = 'pointer';
+
+        const number = document.createElement('span');
+        number.classList.add('number');
+        number.textContent = `${globalCounter}`.padStart(2, '0');
+
+        gridItem.append(img, number);
+        gridElement.appendChild(gridItem);
+
+        gridItem.addEventListener('click', () => {
+          if (isAnimating) return;
+
+          // If already eaten, restore it
+          if (isEmpty) {
+            img.style.transition = 'opacity 0.3s ease-in-out, filter 0.3s ease-in-out, box-shadow 0.3s ease-in-out';
+            img.style.opacity = 1;
+            img.classList.remove('no-shadow', 'eating');
+            img.style.cursor = 'pointer';
+            isEmpty = false;
+
+            eatenItems.delete(imageName);
+            localStorage.setItem('eatenItems', JSON.stringify([...eatenItems]));
+            checkAllFood();
             return;
-        }
+          }
 
-        try {
-            const response = await fetch(`/images?folder=Food/${category}`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch images for ${category}`);
-            }
-            const images = await response.json();
+          // Otherwise, play the eating animation
+          isAnimating = true;
+          img.classList.add('no-shadow', 'eating');
+          img.style.transition = '';
+          img.style.cursor = 'default';
 
-            images.forEach((imageSrc) => {
-                const imageName = imageSrc.split('/').pop();
-                const gridItem = document.createElement('div');
-                gridItem.classList.add('grid-item');
-                let isAnimating = false;
-                let isEmpty = eatenItems.has(imageName); // Initially empty if in cache
-                const img = document.createElement('img');
-                img.src = imageSrc;
-                img.alt = `${category} ${globalCounter}`;
-                img.style.opacity = isEmpty ? 0 : 1; // Initially transparent if in cache
-                img.style.cursor = 'pointer';
+          const onAnimEnd = () => {
+            img.classList.remove('eating', 'no-shadow');
+            img.style.opacity = 0;
+            isEmpty = true;
+            isAnimating = false;
+            img.style.cursor = 'pointer';
 
-                const number = document.createElement('span');
-                number.classList.add('number');
-                number.textContent = `${globalCounter}`.padStart(2, '0');
+            eatenItems.add(imageName);
+            localStorage.setItem('eatenItems', JSON.stringify([...eatenItems]));
+            checkAllFood();
 
-                gridItem.appendChild(img);
-                gridItem.appendChild(number);
-                gridElement.appendChild(gridItem);
+            img.removeEventListener('animationend', onAnimEnd);
+          };
 
-                gridItem.addEventListener('click', () => {
-                    if (isAnimating) return;
+          img.addEventListener('animationend', onAnimEnd);
+        });
 
-                    if (isEmpty) {
-                        img.style.transition = 'opacity 0.3s ease-in-out, filter 0.3s ease-in-out, box-shadow 0.3s ease-in-out';
-                        img.style.opacity = 1;
-                        img.classList.remove('no-shadow');
-                        img.classList.remove('eating');
-                        img.style.cursor = 'pointer';
-                        isEmpty = false;
-
-                        // Remove from cache when it reappears
-                        const eatenImageName = imageSrc.split('/').pop();
-                        eatenItems.delete(eatenImageName);
-                        localStorage.setItem('eatenItems', JSON.stringify(Array.from(eatenItems)));
-                        return;
-                    }
-
-                    isAnimating = true;
-                    img.classList.add('no-shadow');
-                    img.style.transition = '';
-                    img.classList.add('eating');
-                    img.style.cursor = 'default';
-
-                    img.addEventListener('animationend', () => {
-                        img.classList.remove('eating');
-                        img.classList.remove('no-shadow');
-                        img.style.opacity = 0;
-                        isAnimating = false;
-                        isEmpty = true;
-                        img.style.cursor = 'pointer';
-
-                        const eatenImageName = imageSrc.split('/').pop();
-                        eatenItems.add(eatenImageName);
-                        localStorage.setItem('eatenItems', JSON.stringify(Array.from(eatenItems)));
-
-                        img.removeEventListener('animationend', arguments.callee);
-                    });
-                });
-                globalCounter++;
-            });
-        } catch (error) {
-            console.error(`Error loading images for ${category}:`, error);
-        }
+        globalCounter++;
+      });
+    } catch (err) {
+      console.error(`Error loading ${category}:`, err);
     }
+  }
 
-    for (const category in foodGrids) {
-        await loadFoodImages(category, foodGrids[category]);
-    }
+  // Load every category, then do an initial check
+  for (const category in foodGrids) {
+    // await so we guarantee all grid‐items exist before first check
+    await loadFoodImages(category, foodGrids[category]);
+  }
+
+  checkAllFood();
 });
-
-// localStorage.removeItem('eatenItems'); // For testing
