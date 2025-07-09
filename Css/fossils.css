@@ -24,7 +24,7 @@ h1 {
     grid-template-columns: repeat(auto-fill, 480px);
     gap: 7.3%;
     max-width: 100%;
-    margin: 20px 0;
+    margin: 10px 0;
     padding: 10px;
     justify-items: start;
     grid-auto-rows: auto;
@@ -36,7 +36,7 @@ h1 {
     grid-template-columns: repeat(auto-fill, 130px);
     gap: 43px;
     max-width: 100%;
-    margin: 20px 0;
+    margin: 10px 0;
     padding: 10px;
     justify-items: start;
     grid-auto-rows: auto;
@@ -48,7 +48,7 @@ h1 {
     grid-template-columns: repeat(auto-fill, 130px);
     gap: 43px;
     max-width: 100%;
-    margin: 20px 0;
+    margin: 10px 0;
     padding: 10px;
     justify-items: start;
     grid-auto-rows: auto;

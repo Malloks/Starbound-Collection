@@ -12,7 +12,7 @@ h1 {
   grid-template-columns: repeat(auto-fill, 130px); /* Creates a responsive grid */
   row-gap: 10px; /* Space between grid items */
   column-gap: 12px;
-  margin: 20px 0;
+  margin: 10px 0;
   padding: 10px;
   justify-items: start; /* Ensures items are centered within their grid cell */
   align-items: start;

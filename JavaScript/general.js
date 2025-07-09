@@ -1,33 +1,71 @@
 // general.js
-document.addEventListener('DOMContentLoaded', () => {
-  // — Fish link —
-  const fishState     = JSON.parse(localStorage.getItem('gridStateFish_v8')) || {};
-  const fishAllCaught = Object.values(fishState).length > 0
-    && Object.values(fishState).every(s => s.hasFishbowl);
-  const fishLink = document.querySelector('.navbar-links a[href$="fish.html"]');
-  console.log('🐠 fishAllCaught:', fishAllCaught, 'fishLink:', !!fishLink);
-  if (fishLink) fishLink.classList.toggle('completed', fishAllCaught);
+(() => {
+  // 1) Page configuration
+  const pages = [
+    { key: 'gridStateFish_v8',  name: 'fish',      check: s => !!s && Object.values(s).every(x => x.hasFishbowl) },
+    { key: 'fossilsAllDone',    name: 'fossils',   check: raw => raw === 'true' },
+    { key: 'figurinesAllDone',  name: 'figurines', check: raw => raw === 'true' },
+    { key: 'petsAllDone',       name: 'pets',      check: raw => raw === 'true' },
+    { key: 'vanityAllDone',     name: 'vanity',    check: raw => raw === 'true' },
+    { key: 'foodAllDone',       name: 'food',      check: raw => raw === 'true' },
+    { key: 'gridStateBugs_v8',  name: 'bugs',      check: s => !!s && Object.values(s).every(x => x.hasJar) }
+  ];
 
-  // — Fossils link —
-  const fossilAllDone = localStorage.getItem('fossilsAllDone') === 'true';
-  const fossilLink    = document.querySelector('.navbar-links a[href$="fossils.html"]');
-  console.log('🦴 fossilAllDone:', fossilAllDone, 'fossilLink:', !!fossilLink);
-  if (fossilLink) fossilLink.classList.toggle('completed', fossilAllDone);
+  // 2) Normalize href → bare page name
+  function hrefToName(href) {
+    return href
+      .split('?')[0]
+      .replace(/^\//, '')
+      .replace(/\.html$/i, '')
+      .toLowerCase();
+  }
 
-  // — Figurines link —
-  const figurinesAllDone = localStorage.getItem('figurinesAllDone') === 'true';
-  const figurinesLink    = document.querySelector('.navbar-links a[href$="figurines.html"]');
-  console.log('🎎 figurinesAllDone:', figurinesAllDone, 'figurinesLink:', !!figurinesLink);
-  if (figurinesLink) figurinesLink.classList.toggle('completed', figurinesAllDone);
+  // 3) Toggle logic
+  function updateNavLinks() {
+    const navLinks = Array.from(document.querySelectorAll('.navbar-links a'));
+    pages.forEach(({ key, name, check }) => {
+      const raw = localStorage.getItem(key);
+      let done = false;
 
-  // — Pets link —
-  const petsAllDone = localStorage.getItem('petsAllDone') === 'true';
-  const petsLink    = document.querySelector('.navbar-links a[href$="pets.html"]');
-  console.log('🐾 petsAllDone:', petsAllDone, 'petsLink:', !!petsLink);
-  if (petsLink) petsLink.classList.toggle('completed', petsAllDone);
+      if (raw && raw.trim().startsWith('{')) {
+        try { done = check(JSON.parse(raw)); }
+        catch { done = false; }
+      } else {
+        done = check(raw);
+      }
 
-  // — Vanity link —
-  const vanityAllDone = localStorage.getItem('vanityAllDone') === 'true';
-  const vanityLink    = document.querySelector('.navbar-links a[href$="vanity.html"]');
-  if (vanityLink) vanityLink.classList.toggle('completed', vanityAllDone);
-});
+      const link = navLinks.find(a =>
+        hrefToName(a.getAttribute('href') || '') === name
+      );
+      if (link) link.classList.toggle('completed', done);
+    });
+  }
+
+  // 4) Immediately hide the navbar
+  const navbar = document.querySelector('.navbar');
+  if (navbar) navbar.style.visibility = 'hidden';
+
+  // 5) Prevent transition flash during initial update
+  document.documentElement.classList.add('no-nav-transition');
+
+  // 6) Run once synchronously before paint
+  updateNavLinks();
+
+  // 7) On DOMContentLoaded, finalize and show navbar
+  document.addEventListener('DOMContentLoaded', () => {
+    updateNavLinks();
+    // remove the no-transition flag so future toggles animate normally
+    document.documentElement.classList.remove('no-nav-transition');
+    // show the navbar now that classes are correct
+    if (navbar) navbar.style.visibility = '';
+  });
+
+  // 8) Re-run whenever localStorage is updated
+  (function() {
+    const orig = localStorage.setItem;
+    localStorage.setItem = function(k, v) {
+      orig.call(this, k, v);
+      updateNavLinks();
+    };
+  })();
+})();

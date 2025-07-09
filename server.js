@@ -1,85 +1,106 @@
+// server.js
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors'); // Optional: For cross-origin requests
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000; // Use the PORT environment variable or default to 3000
+const port = process.env.PORT || 3000;
 
-// Enable CORS (Optional)
+// Enable CORS if you need it
 app.use(cors());
 
-// Serve static files (e.g., JavaScript, CSS, images) from the root directory
-app.use(express.static(path.join(__dirname)));
-
-// Serve static files from the "Images" folder
-app.use('/Images', express.static(path.join(__dirname, 'Images')));
-
-// Serve the index.html file for the root URL
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+//
+// 1) Redirect lowercase-first URLs to Capital-first
+//
+app.use((req, res, next) => {
+  // match a single path segment starting with a lowercase letter, no extension
+  const m = req.path.match(/^\/([a-z][^\/]*)$/);
+  if (m) {
+    const name = m[1];
+    const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+    // preserve any query string
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, `/${capitalized}${qs}`);
+  }
+  next();
 });
 
-// Function to get all image files from a directory and its subdirectories
+//
+// 2) Serve Capital-first URLs by mapping to lowercase .html files
+//
+app.use((req, res, next) => {
+  const capMatch = req.path.match(/^\/([A-Z][^\/]+)$/);
+  if (capMatch) {
+    const name = capMatch[1];
+    const filename = name.charAt(0).toLowerCase() + name.slice(1) + '.html';
+    const fullPath = path.join(__dirname, filename);
+    if (fs.existsSync(fullPath)) {
+      return res.sendFile(fullPath);
+    }
+  }
+  next();
+});
+
+//
+// 3) Static‐serve your project root, hiding “.html” via extensions fallback
+//
+app.use(
+  express.static(path.join(__dirname), {
+    extensions: ['html']
+  })
+);
+
+//
+// 4) Serve Images folder
+//
+app.use('/Images', express.static(path.join(__dirname, 'Images')));
+
+//
+// 5) Your existing /images API
+//
 function getImageFiles(dir) {
   let imageFiles = [];
-  const files = fs.readdirSync(dir);
-
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-
+  fs.readdirSync(dir).forEach(file => {
+    const full = path.join(dir, file);
+    const stat = fs.statSync(full);
     if (stat.isDirectory()) {
-      // Recursively get images from subdirectories
-      imageFiles = imageFiles.concat(getImageFiles(filePath));
-    } else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) {
-      // Add image files to the array
-      imageFiles.push(filePath);
+      imageFiles = imageFiles.concat(getImageFiles(full));
+    } else if (/\.(jpe?g|png|gif|webp)$/i.test(file)) {
+      imageFiles.push(full);
     }
   });
-
   return imageFiles;
 }
 
-// Route to get images from a specific folder inside the "Images" directory
 app.get('/images', (req, res) => {
-  const folder = req.query.folder; // Get the folder name from the query parameter
-  const imagesDir = path.join(__dirname, 'Images', folder); // Path to the requested folder
-
-  // Log the requested folder and full path
-  console.log(`Requested folder: ${folder}`);
-  console.log(`Full path to folder: ${imagesDir}`);
-
+  const folder = req.query.folder;
   if (!folder) {
     return res.status(400).json({ error: 'Folder query parameter is required.' });
   }
 
-  // Check if the folder exists
+  const imagesDir = path.join(__dirname, 'Images', folder);
   if (!fs.existsSync(imagesDir)) {
-    console.error(`Folder not found: ${imagesDir}`);
-    return res.status(404).json({ error: `Folder ${folder} does not exist.` });
+    return res.status(404).json({ error: `Folder “${folder}” does not exist.` });
   }
 
   try {
-    // Get all image files from the folder
-    const imageFiles = getImageFiles(imagesDir);
-
-    if (imageFiles.length === 0) {
-      return res.status(404).json({ error: `No images found in folder ${folder}.` });
+    const files = getImageFiles(imagesDir);
+    if (files.length === 0) {
+      return res.status(404).json({ error: `No images found in folder “${folder}”.` });
     }
-
-    // Log the found image files
-    console.log(`Images found in ${folder}:`, imageFiles);
-
-    // Return the paths to the images relative to the server
-    res.json(imageFiles.map(file => path.relative(__dirname, file).replace(/\\/g, '/')));
+    // Send paths relative to project root
+    const rel = files.map(f => path.relative(__dirname, f).replace(/\\/g, '/'));
+    res.json(rel);
   } catch (err) {
-    console.error(`Error reading folder ${imagesDir}:`, err);
+    console.error('Error reading images:', err);
     res.status(500).json({ error: 'Failed to load images.' });
   }
 });
 
-// Start the server
+//
+// 6) Start the server
+//
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

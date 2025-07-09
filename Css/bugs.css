@@ -2,7 +2,7 @@
 .grid-container {
   width: 90%;
   max-width: 90%;
-  margin: 20px auto 15px;  /* 20px top, centered, 15px bottom */
+  margin: -10px auto 15px;  /* 20px top, centered, 15px bottom */
 }
 
 /* === match Pets layout: inner grid === */
@@ -11,7 +11,7 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   row-gap: 10px;
   column-gap: 12px;
-  margin: 20px 0;
+  margin: 10px 0;
   padding: 10px;
   justify-items: start;
   align-items: start;
@@ -186,4 +186,21 @@
   line-height: 1.2;
 }
 
+/* e.g. give a red drop-shadow and a little border */
+.animation-frame.set-image[data-done-overlay="true"] {
+  width: 400%;
+  height: 400%;
+  image-rendering: pixelated;
+  /* anything else you like… */
+}
 
+.animation-frame {
+  /* fades are handled via opacity only */
+  transition: opacity 200ms ease-in-out;
+  will-change: 1;
+}
+
+/* ensure looped videos start fully visible */
+.set-video {
+  opacity: 1;
+}
