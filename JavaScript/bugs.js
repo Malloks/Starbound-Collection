@@ -252,7 +252,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         cursor:         'pointer',
         imageRendering: 'pixelated'
       });
-      if (slotState.clicked[idx]) icon.style.filter = 'grayscale(100%)';
+    // always give the drop-shadow, and if clicked add grayscale
+    icon.style.filter = 'drop-shadow(5px 5px 5px #1a1a1a)'
+                      + (slotState.clicked[idx] ? ' grayscale(100%)' : '');
 
       // Core click logic (unchanged)
       icon.addEventListener('click', () => {
@@ -268,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           slotState.collected[idx] = true;
           saveState();
           updateBugsNavState();
-          icon.style.filter = 'grayscale(100%)';
+          icon.style.filter = 'drop-shadow(4px 4px 6px rgba(0,0,0,0.5)) grayscale(100%)';
 
           // on loop end, play one-off “done” clip
           const onLoopEnd = () => {
@@ -326,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           slotState.collected[idx] = false;
           saveState();
           updateBugsNavState();
-          icon.style.filter = '';
+          icon.style.filter = 'drop-shadow(5px 5px 5px #1a1a1a)';
 
           // remove done overlays
           bigBox.querySelectorAll(

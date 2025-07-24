@@ -87,6 +87,7 @@ h1 {
   box-shadow: none !important;
   /* preserve pixel-art sharpness */
   image-rendering: pixelated;
+  overflow: hidden;
 }
 
 /* in your main stylesheet */

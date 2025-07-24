@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         number.textContent = `${index + 1}`.padStart(2, '0');
 
         gridItem.append(img, number);
+        // 1) Give every figurine img the base class so CSS can style it
+        img.classList.add('set-image');
 
         // restore collected state
         if (savedState[index]?.pedestalAdded) {
@@ -77,10 +79,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             savedState[index].pedestalPosition,
             pedestalImage
           );
-          requestAnimationFrame(() => {
-            img.style.transition = 'filter 1s ease';
-            img.style.filter     = 'grayscale(100%)';
-          });
+          // gray it out by toggling the CSS class
+          img.classList.add('grayscale');
         }
 
         gridItem.addEventListener('click', () => {
@@ -90,12 +90,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const pedestalImage = getPedestalImage(folderName);
           if (gridItem.classList.contains('pedestal-added')) {
-            // remove
+            // remove pedestal
             removePedestalAnimation(gridItem, img, number);
+            // take off the gray class → back to colored + drop-shadow
+            img.classList.remove('grayscale');
             savedState[index] = { pedestalAdded: false, pedestalPosition: null };
           } else {
-            // add
+            // add pedestal
             applyPedestalAnimation(gridItem, img, number, true, null, pedestalImage);
+            // gray out the figurine
+            img.classList.add('grayscale');
             const pedestalPosition = -(60 - img.offsetTop);
             savedState[index] = { pedestalAdded: true, pedestalPosition };
           }
@@ -144,11 +148,11 @@ function applyPedestalAnimation(gridItem, img, number, animate = true, savedPede
   pedestal.alt = 'Pedestal';
   Object.assign(pedestal.style, {
     position:   'absolute',
-    zIndex:     '-1',
+    zIndex:     '0',
     left:       '50%',
     transform:  'translateX(-50%)',
-    filter:     'grayscale(100%)',
-    transition: animate ? 'bottom 1s ease' : 'none'
+    filter:     `drop-shadow(5px 5px 5px #1a1a1a) grayscale(100%)`,
+    transition: animate ? 'bottom 1s ease-in' : 'none'
   });
 
   gridItem.style.position = 'relative';
@@ -163,12 +167,6 @@ function applyPedestalAnimation(gridItem, img, number, animate = true, savedPede
 
   // drop pedestal
   setTimeout(() => pedestal.style.bottom = `${stopBottom}px`, 50);
-
-  // only fade image when animate===true
-  if (animate) {
-    img.style.transition = 'filter 1s ease';
-    img.style.filter     = 'grayscale(100%)';
-  }
 
   // inject shake keyframes once
   if (!document.getElementById('shake-keyframes')) {
@@ -197,14 +195,13 @@ function removePedestalAnimation(gridItem, img, number) {
   if (pedestal) {
     const imgBottom       = img.offsetTop + img.offsetHeight;
     const offscreenBottom = -(imgBottom + 50);
-    pedestal.style.transition = 'bottom 1s ease';
+    pedestal.style.transition = 'bottom 1s ease-in';
     pedestal.style.bottom     = `${offscreenBottom}px`;
     setTimeout(() => pedestal.remove(), 1000);
   }
 
-  // fade back to color
-  img.style.transition = 'filter 1s ease';
-  img.style.filter     = 'none';
+  // fade back to color by removing the class; CSS handles the rest
+  img.classList.remove('grayscale');
 
   gridItem.classList.remove('pedestal-added');
 }

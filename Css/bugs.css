@@ -76,6 +76,7 @@
   max-height: 100%;
   object-fit: contain;
   transition: opacity 0.3s ease-in-out;
+  filter: drop-shadow(5px 5px 5px #1a1a1a);
 }
 
 /* Velvet rope graphic (optional) */
@@ -125,6 +126,7 @@
   cursor: pointer;
   image-rendering: pixelated;
   transition: transform 0.2s ease;
+  filter: drop-shadow(5px 5px 5px #1a1a1a);
 }
 .container-2 img:hover,
 .container-3 img:hover,
@@ -157,6 +159,7 @@
   pointer-events: none;
   z-index: 10;
 }
+
 .icons-row .container:hover .tooltip {
   display: block;
 }

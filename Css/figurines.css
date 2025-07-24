@@ -39,12 +39,13 @@ h1 {
   align-items: center;
   position: relative;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+  background-color: rgba(148, 148, 148, 0.19);
+  box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
   height: 70px;
   width: 70px;
   overflow: hidden;
-  background-color: rgba(148, 148, 148, 0.19);
-  box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
+  transition: background-color 0.3s ease,
+              transform 0.3s ease;
 }
 
 .grid-item:hover {
@@ -52,12 +53,13 @@ h1 {
   transform: scale(1.05);
 }
 
-.grid-item img {
-  object-fit: cover;
+.grid-item img.set-image {
+  filter: drop-shadow(5px 5px 5px #1a1a1a) grayscale(0%);
+  transition: filter 1s ease-in;
   max-width: 90%;
   max-height: 90%;
-  -webkit-filter: drop-shadow(5px 5px 5px #1a1a1a);
-  filter: drop-shadow(5px 5px 5px #1a1a1a);
+  position: relative;
+  z-index: 1;
 }
 
 .grid-item span {
@@ -90,17 +92,14 @@ h1 {
   cursor: not-allowed;
 }
 
-.capture-pod-image {
-  position: absolute;
-  top: 10;
-  left: 10;
-  right: 10;
-  bottom: 10;
-  z-index: 10;
+
+/* always on the pedestal */
+img[alt="Pedestal"] {
+  filter: drop-shadow(5px 5px 5px #1a1a1a)
+          grayscale(100%);
+  /* inherits the same transition */
 }
 
-.grid-item.clicked img {
-  animation: glow 1s forwards;
-  filter: brightness(0.5) hue-rotate(180deg)
-          drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
+img.set-image.grayscale {
+  filter: drop-shadow(0px 0px 0px #1a1a1a) grayscale(100%);
 }

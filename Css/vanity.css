@@ -117,12 +117,15 @@ body {
   width: 55%;
   image-rendering: auto;
 }
+
 .container-1 img {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   transition: clip-path 0.3s ease;
+  /*filter: drop-shadow(5px 5px 5px #1a1a1a);*/
 }
+
 .container-1 img:hover {
   cursor: default;
 }
@@ -192,6 +195,7 @@ body {
   z-index: 2;
   animation: 0.35s ease-in-out;
 }
+
 .mannequin {
   position: absolute;
   z-index: -1;

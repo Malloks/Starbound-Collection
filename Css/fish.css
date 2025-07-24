@@ -88,18 +88,21 @@ h1 {
 /* Fish + related wrappers/overlays */
 .fish {
   display: block;
-  opacity: 1;
+  position: relative;
   transition: opacity 0.4s ease-in-out;
   transform: scale(0.7);
   z-index: 1;
 }
+
 .fish-wrapper {
   position: relative;
   display: inline-block;
   line-height: 0;
-  transition: transform 0.65s ease-in-out;
+  transition: transform 0.5s ease-in-out;
   filter: drop-shadow(5px 5px 5px #1a1a1a);
+  z-index: 2;
 }
+
 .triangle {
   position: absolute;
   bottom: 5px;
@@ -108,7 +111,21 @@ h1 {
   height: 15%;
   border-bottom-right-radius: 6px;
   z-index: 0;
+    background: linear-gradient(
+    to bottom right,
+    transparent 50%,
+    var(--triangle-color) 50%
+  );
+  /* start partially faded */
+  opacity: 0.4;
+  /* animate opacity */
+  transition: opacity 0.3s ease-in;
 }
+
+.grid-item:hover .triangle {
+  opacity: 0.5;
+}
+
 .fishbowl {
   position: absolute;
   top: 0;
@@ -118,24 +135,46 @@ h1 {
   display: none;
   transform: scale(0.7);
   transition: top 0.4s ease-out;
-  z-index: -1;
+  z-index: 0;
+  filter: drop-shadow(5px 5px 5px #1a1a1a) !important;
 }
 .fishbowl.hidden {
   display: none !important;
 }
+
+/* back half of the hook, behind the fish */
+.fish-hook-back {
+  z-index: 0;
+}
+
+/* front half of the hook, above the fish */
+.fish-hook-front {
+  z-index: 3;
+}
+
 .fish-hook {
   position: absolute;
-  left: 50%;
+  /* allow JS to fully control horizontal */
+  left: 0;
   top: -130px;
   transform: translateX(-50%);
-  width: 30px;
-  transition: top 0.5s ease-in-out;
-  filter: drop-shadow(3px 3px 3px #1a1a1a);
-  z-index: 10;
+  width: 20px;
+  transition: top 0.75s ease-in-out;
+  filter: drop-shadow(5px 5px 5px #1a1a1a);
 }
-.grid-item img.fishHook {
-  bottom: -150px;
-  top: auto;
+
+/* outer: lift */
+.fish-mover {
+  position: relative;
+  transition: transform 0.5s ease-in-out; /* same as before */
+}
+
+/* inner: tilt */
+.fish-rotator {
+  position: relative;
+  /* much snappier tilt */
+  transition: transform 0.35s ease-in-out;
+  transform-origin: var(--hook-x, 50%) 50%; /* we'll set --hook-x in JS */
 }
 
 /* Gray-out state */
@@ -190,4 +229,59 @@ h1 {
   margin-bottom: -10px;
   color: #5d5d5d90;
   font-weight: bold;
+}
+
+
+/* show on hover */
+.grid-item:hover .day-icon,
+.grid-item:hover .depth-icon {
+  opacity: 0;
+}
+
+/* top-right corner */
+.day-icon {
+  opacity: 0;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* bottom-left corner */
+.depth-icon {
+  opacity: 0;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* new wrapper that allows overflow for the label */
+.grid-item-wrapper {
+  position: absolute;
+  overflow: visible;
+  display: inline-block;  /* or flex, whatever your layout needs */
+}
+
+/* your floating label */
+.item-label {
+  position: absolute;
+  top: 100%;       /* right below the 90px+padding tile */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 0.9rem;
+  z-index: 10;
 }

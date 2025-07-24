@@ -148,3 +148,37 @@ h1 {
   animation: glow 1s forwards; /* Apply glow animation */
   filter: brightness(0.5) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
 }
+
+.grid-item img.food-img {
+  margin-top: 8px;
+  transform: scale(0.9);
+}
+
+/* By default, “rotated” cloches sit at the dropped (un-rotated) position */
+.cloche-overlay.rotate {
+  transform: translateX(-50%) translateY(0);
+  transition: transform 0.3s ease;
+}
+
+/* When you hover the grid item (and the cloche has .rotate), apply the final rotated pose */
+.grid-item:hover .cloche-overlay.rotate {
+  transform: translateX(-50%) translateY(-30%) rotate(45deg);
+}
+
+.cloche-overlay.visible {
+  top: 0;
+}
+
+.cloche-overlay {
+  width: 80%;
+  height: auto;
+  max-width: 120px;
+  max-height: 120px;
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: -120%; /* start above */
+  transform-origin: 100% 100%; /* pivot at bottom-right */
+  transform: translateX(-50%) rotate(0deg);
+  transition: top 0.4s ease-out, transform 0.2s ease;
+}

@@ -1,48 +1,41 @@
-@font-face {
-    font-family: Starbound Font;
-    src: url(../Resources/Font/starbound-font.ttf);
-  }
-  
-/* Disable text selection */
-*{
-  user-select: none;
-}
+/* fish-page.css – only page-specific styles */
 
-/* Disable image selection */
+/* Make all images fade in/out */
 img {
-  user-select: none;
+  transition: opacity 0.5s ease;
 }
 
+/* Page-specific body layout overrides */
 body {
-  font-family: Starbound Font;
-  background-color: #111;
-  color: white;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto; /* this differs from the global overlay behavior */
 }
 
+/* Page title */
 h1 {
   text-align: center;
   margin-top: 20px;
   font-size: 2rem;
 }
 
+/* Universal grid styling (note: gap and column size differ) */
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 110px); /* Creates a responsive grid */
-    gap: 10px;
-    max-width: 100%; /* Ensures grid is responsive */
-    margin: 20px 0;
-    padding: 10px;
-    justify-items: start; /* Ensures items are centered within their grid cell */
-    align-items: start;
-    grid-auto-rows: auto; /* Allows the grid to grow in height as needed */
-    grid-auto-flow: row; /* Forces grid items to flow in rows */
-  }
-  
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 110px);
+  gap: 33px;           /* page-specific spacing */
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  justify-items: start;
+  align-items: start;
+  grid-auto-rows: auto;
+  grid-auto-flow: row;
+}
+
+/* Grid items */
 .grid-item {
   border-radius: 8px;
   padding: 20px;
@@ -50,77 +43,37 @@ h1 {
   justify-content: center;
   align-items: center;
   position: relative;
-  cursor: pointer; /* Makes the items look clickable */
-  transition: background-color 0.3s ease, transform 0.3s ease, filter 0.3s ease; /* Smooth transition */  
-  height: 70px; /* Fixed height */
-  width: 70px;  /* Fixed width */
-  overflow: hidden; /* Prevents images from overflowing */
+  cursor: pointer;
+  transition: background-color 0.5s ease,
+              transform        0.5s ease,
+              filter           0.5s ease;
+  height: 90px;
+  width: 90px;
+  overflow: hidden;
   background-color: rgba(148, 148, 148, 0.19);
   box-shadow: 2px 2px 8px rgba(255, 255, 255, 0.10);
 }
-
-/* Hover effects for grid items */
 .grid-item:hover {
-  background-color: #444444d8; /* Lighter background on hover */
-  transform: scale(1.05); /* Slight zoom effect on hover */
+  background-color: #444444d8;
+  transform: scale(1.05);
 }
-
 .grid-item img {
-  object-fit: cover; /* Ensures images fill the fixed box */
-  filter: drop-shadow(5px 5px 5px #1a1a1a);  
-  padding-top: 10px;
-  max-width: 100%;
-  height: auto;
-  display: block;
-  mask-mode: alpha;
-  -webkit-mask-mode: alpha;
-  mask-origin: content-box; /* Align based on the image content */
-  -webkit-mask-origin: content-box;
-  mask-position: center top; /* Try aligning the top edges */
-  -webkit-mask-position: center top;
-  animation-play-state: paused;
-  animation-duration: 1s; /* Total animation duration */
-  animation-timing-function: steps(1, start); /* Step through keyframes */
-  animation-iteration-count: 1;
-  animation-fill-mode: forwards;
+  object-fit: cover;
+  filter: drop-shadow(5px 5px 5px #1a1a1a);
 }
 
-.grid-item img.bitten {
-    filter: brightness(70%); /* Optional: Keep the dimming effect */
+/* Label on each grid item */
+.grid-item span {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: #5d5d5d90;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
 }
 
-.grid-item img.no-shadow {
-    filter: drop-shadow(0px 0px 0px #1a1a1a);  
-}
-
-.grid-item img.eating {
-  animation-play-state: running;
-  animation-name: eating-animation;
-}
-
-@keyframes eating-animation {
-    0% {
-        mask-image: '';
-        -webkit-mask-image: '';
-    }
-    25% {
-        mask-image: url("../Images/Animation/Eaten/bite-mask-1.png");
-        -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-1.png");
-    }
-    50% {
-        mask-image: url("../Images/Animation/Eaten/bite-mask-2.png");
-        -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-2.png");
-    }
-    75% {
-        mask-image: url("../Images/Animation/Eaten/bite-mask-3.png");
-        -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-3.png");
-    }
-    100% {
-        mask-image: url("../Images/Animation/Eaten/bite-mask-4.png");
-        -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-4.png");
-    }
-}
-
+/* Number indicator inside each item */
 .number {
   position: absolute;
   top: 10px;
@@ -132,222 +85,132 @@ h1 {
   z-index: 3;
 }
 
-.grid-item span {
+/* Fish + related wrappers/overlays */
+.fish {
+  display: block;
+  position: relative;
+  transition: opacity 0.4s ease-in-out;
+  transform: scale(0.7);
+  z-index: 1;
+}
+.fish-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  transition: transform 0.5s ease-in-out;
+  filter: drop-shadow(5px 5px 5px #1a1a1a);
+  z-index: 2;
+}
+.triangle {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  color: #5d5d5d90;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin: 0;
+  bottom: 5px;
+  right: 5px;
+  width: 15%;
+  height: 15%;
+  border-bottom-right-radius: 6px;
+  z-index: 0;
+}
+.fishbowl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  transform: scale(0.7);
+  transition: top 0.4s ease-out;
+  z-index: 0;
+  filter: drop-shadow(5px 5px 5px #1a1a1a) !important;
+}
+.fishbowl.hidden {
+  display: none !important;
 }
 
-/* Grid container for each section */
-.grid-container {
-  width: 90%;
-  max-width: 90%;
-  margin-bottom: 7.5px;
+/* back half of the hook, behind the fish */
+.fish-hook-back {
+  z-index: 0;
 }
 
-.subTitle {
-  text-align: left;
-  font-size: 1.5rem;
-  margin-left: 10px;
-  margin-bottom: -10px;
-  color: #5d5d5d90; /* Matches hover color */
-  font-weight: bold;
+/* front half of the hook, above the fish */
+.fish-hook-front {
+  z-index: 3;
 }
 
-/* Class to gray out the image */
+.fish-hook {
+  position: absolute;
+  /* allow JS to fully control horizontal */
+  left: 0;
+  top: -130px;
+  transform: translateX(-50%);
+  width: 20px;
+  transition: top 0.75s ease-in-out;
+  filter: drop-shadow(3px 3px 3px #1a1a1a);
+}
+
+/* outer: lift */
+.fish-mover {
+  position: relative;
+  transition: transform 0.5s ease-in-out; /* same as before */
+}
+
+/* inner: tilt */
+.fish-rotator {
+  position: relative;
+  /* much snappier tilt */
+  transition: transform 0.35s ease-in-out;
+  transform-origin: var(--hook-x, 50%) 50%; /* we'll set --hook-x in JS */
+}
+
+/* Gray-out state */
 .gray-out {
-  filter: grayscale(100%); /* Grays out the image */
-  cursor: not-allowed; /* Changes the cursor to indicate that it's inactive */
+  filter: grayscale(100%);
+  cursor: not-allowed;
 }
 
-/* When clicked, apply red and glow effect */
+/* Clicked-glow effect (uses shared keyframes) */
 .grid-item.clicked img {
-  animation: glow 1s forwards; /* Apply glow animation */
-  filter: brightness(0.5) hue-rotate(180deg) drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
+  animation: glow 1s forwards;
+  filter: brightness(0.5)
+          hue-rotate(180deg)
+          drop-shadow(0 0 10px red)
+          drop-shadow(0 0 20px red);
 }
 
-/* Define the shake animation */
+/* Shake animations */
 @keyframes shake {
-  0% {
-    transform: rotate(0deg);  
-  }
-  25% {
-    transform: rotate(-3deg);
-  }
-  50% {
-    transform: rotate(3deg);
-  }
-  75% {
-    transform: rotate(-3deg);
-  }
-  100% {
-    transform: rotate(0deg);  
-  }
+  0%   { transform: rotate(0deg);   }
+  25%  { transform: rotate(-3deg);  }
+  50%  { transform: rotate(3deg);   }
+  75%  { transform: rotate(-3deg);  }
+  100% { transform: rotate(0deg);   }
 }
-
 @keyframes bowlshake {
-  /* Include translateX and scale in every step */
   0%   { transform: translateY(-15%) scale(0.7) rotate(0deg); }
   25%  { transform: translateY(-15%) scale(0.7) rotate(-3deg); }
-  50%  { transform: translateY(-15%) scale(0.7) rotate(3deg); }
+  50%  { transform: translateY(-15%) scale(0.7) rotate(3deg);  }
   75%  { transform: translateY(-15%) scale(0.7) rotate(-3deg); }
-  100% { transform: translateY(-15%) scale(0.7) rotate(0deg); }
+  100% { transform: translateY(-15%) scale(0.7) rotate(0deg);  }
 }
-
-/* Apply the shake animation to the fishbowl */
 .shake {
   animation: shake 0.4s ease-in-out;
   transform-origin: bottom;
 }
-
-/* Apply the shake animation to the fishbowl */
 .bowlshake {
   animation: bowlshake 0.4s ease-in-out;
   transform-origin: bottom;
 }
 
-/* Navbar Styles */
-.navbar {
-  color: white;
-  padding: 10px 0;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  border-bottom-left-radius: 25px;
-  border-bottom-right-radius: 25px;
-  background-color: rgba(60, 60, 60, 0.6);
-  box-shadow: 1px 1px 6px 0px rgba(128, 128, 128, 0.165);    
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+/* Section containers & subtitles */
+.grid-container {
+  width: 90%;
+  max-width: 90%;
+  margin-bottom: 7.5px;
 }
-
-.navbar-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-}
-
-.navbar-logo {
-  font-size: 24px;
-  color: white;
-  text-decoration: none;
+.subTitle {
+  text-align: left;
+  font-size: 1.5rem;
+  margin-left: 10px;
+  margin-bottom: -10px;
+  color: #5d5d5d90;
   font-weight: bold;
-}
-
-.navbar-links {
-  list-style: none;
-  display: flex;
-  gap: 20px;
-}
-
-.navbar-links li {
-  margin: 0;
-}
-
-.navbar-links a {
-  color: white;
-  text-decoration: none;
-  font-size: 18px;
-  transition: color 0.3s;
-}
-
-.navbar-links a:hover {
-  color: #e4c464;  /* Hover effect color */
-  text-shadow: 0 2px 10px #e4c464;
-
-}
-/* Slick, modern scrollbar style, with overlay behavior */
-::-webkit-scrollbar {
-  width: 8px; /* Thin scrollbar */
-  background-color: transparent; /* Transparent track */
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent dark thumb */
-  border-radius: 4px; /* Rounded corners */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5); /* Slightly darker on hover */
-}
-
-::-webkit-scrollbar-track {
-  background-color: transparent; /* Transparent track */
-}
-
-/* Firefox alternative (less customization) */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(255, 255, 255, 0.075) transparent; /* thumb track */
-}
-
-/* Optional: smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Example usage within a div, with overlay behavior */
-.scrollable-div {
-  overflow-y: overlay; /* overlay scrollbar */
-  max-height: 300px; /* Set a maximum height */
-}
-
-/* Example usage applied to body, with overlay behavior */
-body {
-  overflow-y: overlay;
-}
-
-/* Optional: if you still need padding in some cases, you can use it like this */
-.padded-scrollable-div {
-  overflow-y: auto;
-  max-height: 300px;
-  padding-right: 10px;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .navbar-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .navbar-links {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .navbar-links.active {
-    display: flex;
-  }
-
-  .navbar-logo {
-    margin-bottom: 10px;
-  }
-}
-
-/* Burger Menu */
-.burger {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-  gap: 5px;
-}
-
-.burger .line {
-  width: 25px;
-  height: 3px;
-  background-color: white;
-  border-radius: 5px;
-}
-
-@media (max-width: 768px) {
-  .burger {
-    display: flex;
-  }
 }

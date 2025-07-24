@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const DROP_SHADOW = 'drop-shadow(5px 5px 5px #1a1a1a)';
     const savedState = JSON.parse(localStorage.getItem('vanityItemsStateRevamp')) || {};
     // Grab the H1
     const titleEl = document.getElementById('page-title');
@@ -256,11 +257,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // — apply savedState so reloads honor prior grayscaling —
                                 const pathKeyIcon = `${category}/${item}`;
                                 const savedIconState = savedState[pathKeyIcon]?.[num];
-                                if (savedIconState?.grayed) {
-                                  baseImg.style.filter = 'grayscale(100%)';
-                                } else {
-                                  baseImg.style.filter = 'grayscale(0%)';
-                                }
+                                // always include the drop-shadow, then gray or not
+                                baseImg.style.filter =
+                                  `${DROP_SHADOW} grayscale(${savedIconState?.grayed ? '100%' : '0'})`;
                                 baseImg.style.transition = 'filter 0.5s ease';
                                 baseImg.style.cursor     = 'pointer';
                                 container.appendChild(baseImg);
@@ -299,8 +298,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     const wasAllVisibleBeforeClick = mannequinDone.style.opacity === '1';
                                     const newVisible = overlay.style.opacity !== '1';
                                     overlay.style.opacity = newVisible ? '1' : '0';
-                                    baseImg.style.filter = newVisible ? 'grayscale(100%)' : 'grayscale(0%)';
-                                
+                                    baseImg.style.filter =
+                                      `${DROP_SHADOW} grayscale(${newVisible ? '100%' : '0'})`;                                
                                     // update savedState…
                                     savedState[pathKey] = savedState[pathKey] || {};
                                     savedState[pathKey][num] = { visible: newVisible, grayed: newVisible };
