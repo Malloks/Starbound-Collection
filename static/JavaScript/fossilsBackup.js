@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Derive unique item folder names
                 const itemFolders = itemsPaths.reduce((acc, path) => {
                     // Adjusted regex to handle both .webp and .png in paths potentially
-                    const match = path.match(new RegExp(`^Images/${baseFolder}/${category}/([^/]+)/`));
+                    const match = path.match(new RegExp(`^(?:Resources/)?Images/${baseFolder}/${category}/([^/]+)/`));
                     if (match && match[1] && !acc.includes(match[1])) {
                          acc.push(match[1]);
                     }
@@ -124,12 +124,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             container.style.overflow = 'visible';
                             try {
                                 // Keep Mannequin/Display images as WEBP unless specified otherwise
-                                const mannequin = await getImage(`/Images/Misc/${category}Display.webp`);
+                                const mannequin = await getImage(`/Resources/Misc/${category}Display.webp`);
                                 mannequin.alt = 'Mannequin';
                                 mannequin.classList.add('set-image');
                                 mannequin.style.zIndex = "1";
 
-                                const mannequinDone = await getImage(`/Images/Misc/${category}DisplayDone.webp`);
+                                const mannequinDone = await getImage(`/Resources/Misc/${category}DisplayDone.webp`);
                                 mannequinDone.alt = 'MannequinDone';
                                 mannequinDone.classList.add('set-image');
                                 mannequinDone.style.zIndex = "2";
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                 let mannequinAdd = null;
                                 if (category === 'Medium') {
-                                    mannequinAdd = await getImage(`/Images/Misc/MediumDisplayPole.webp`);
+                                    mannequinAdd = await getImage(`/Resources/Misc/MediumDisplayPole.webp`);
                                     mannequinAdd.alt = 'MannequinAdd';
                                     mannequinAdd.classList.add('set-image');
                                     mannequinAdd.style.zIndex = "0";
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         console.warn(`Overlay image ${num}_On.(png/webp) not found for ${category}/${item}`);
                                         continue;
                                     }
-                                    const overlay = await getImage(`/${overlayPath}`); // Assumes paths start with /Images/...
+                                    const overlay = await getImage(`/${overlayPath}`); // Assumes paths start with /Resources/... now
                                     overlay.alt = `Overlay ${num}`;
                                     overlay.classList.add('set-image');
                                     overlay.style.opacity = '0';
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     continue; // Skip this icon container if path not found
                                 }
 
-                                const baseImg = await getImage(`/${iconPath}`); // Assumes paths start with /Images/...
+                                const baseImg = await getImage(`/${iconPath}`); // Assumes paths start with /Resources/... now
                                 baseImg.alt = `Icon ${num}`;
                                 baseImg.classList.add('set-image');
                                 baseImg.style.filter = 'grayscale(0%)';
@@ -328,8 +328,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const smallUrl = allVisible
-          ? `/Images/Animation/SmallFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/SmallFossilDoneR.webp?reload=${Date.now()}`;
+          ? `/Resources/Animation/SmallFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/SmallFossilDoneR.webp?reload=${Date.now()}`;
         animImg.src = smallUrl;
     
         animImg.classList.add('set-image', 'fossil-anim-img');
@@ -359,8 +359,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const medUrl = allVisible
-          ? `/Images/Animation/MediumFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/MediumFossilDoneR.webp?reload=${Date.now()}`;
+          ? `/Resources/Animation/MediumFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/MediumFossilDoneR.webp?reload=${Date.now()}`;
         animImg.src = medUrl;
     
         animImg.classList.add('set-image', 'fossil-anim-img');
@@ -398,8 +398,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const largeUrl = allVisible
-          ? `/Images/Animation/LargeFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/LargeFossilDoneR.webp?reload=${Date.now()}`;
+          ? `/Resources/Animation/LargeFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/LargeFossilDoneR.webp?reload=${Date.now()}`;
         animImg.src = largeUrl;
 
         animImg.classList.add('set-image', 'fossil-anim-img');

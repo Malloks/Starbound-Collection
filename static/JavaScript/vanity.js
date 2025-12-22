@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 2) Derive unique folderPaths (one per set)
         flatPaths.forEach(p => {
             const fp = p
-              .replace(/^Images\//, '')
+              .replace(/^(?:Resources\/)?Images\//, '')
               .replace(/^Vanity Revamp\//, '')
               .replace(/\/[^/]+\.png$/, '');
             if (!folderPaths.includes(fp)) folderPaths.push(fp);
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (i === 0) {
                     // base mannequin
                     mannequinImg = document.createElement('img');
-                    mannequinImg.src = '/Images/Misc/Mannequin.png';
+                    mannequinImg.src = '/Resources/Misc/Mannequin.png';
                     mannequinImg.alt = 'Mannequin';
                     mannequinImg.classList.add('set-image');
                     mannequinImg.style.transition = 'filter 0.5s ease';
@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                                  .filter(s => s.visible).length;
                       const needed = overlayCounts[folderPath] || 0;
                       mannequinImg.src = (needed > 0 && visibleCount === needed)
-                        ? '/Images/Misc/GoldMannequin.png'
-                        : '/Images/Misc/Mannequin.png';
+                        ? '/Resources/Misc/GoldMannequin.png'
+                        : '/Resources/Misc/Mannequin.png';
 
                       // re-evaluate global completion
                       checkAllVanity();
@@ -153,8 +153,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const need = overlayCounts[folderPath] || 0;
             if (mannequinImg) {
               mannequinImg.src = (need > 0 && initVis === need)
-                ? '/Images/Misc/GoldMannequin.png'
-                : '/Images/Misc/Mannequin.png';
+                ? '/Resources/Misc/GoldMannequin.png'
+                : '/Resources/Misc/Mannequin.png';
             }
 
             grid.appendChild(gridItem);

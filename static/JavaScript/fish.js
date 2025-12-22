@@ -31,9 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const howDeepCodes   = '132113213232123323132132321133223132123323331332'
         .split('').map(Number);
 
-    const BOWL_SMALL_SRC   = 'Images/Misc/FishbowlSmall.png';
-    const BOWL_MEDIUM_SRC  = 'Images/Misc/FishbowlMedium.png';
-    const BOWL_BIG_SRC     = 'Images/Misc/FishbowlBig.png';
+    const BOWL_SMALL_SRC   = '/Resources/Misc/FishbowlSmall.png';
+    const BOWL_MEDIUM_SRC  = '/Resources/Misc/FishbowlMedium.png';
+    const BOWL_BIG_SRC     = '/Resources/Misc/FishbowlBig.png';
     const BOWL_DEFAULT_SRC = BOWL_MEDIUM_SRC;
 
     // --- Animation Timings (ms) ---
@@ -50,14 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Day / Night icons mapping
     const DAY_ICONS = {
-        1: 'Images/Misc/Sun.png',
-        2: 'Images/Misc/Moon.png',
-        3: 'Images/Misc/SunMoon.png'
+        1: '/Resources/Misc/Sun.png',
+        2: '/Resources/Misc/Moon.png',
+        3: '/Resources/Misc/SunMoon.png'
     };
     const DEPTH_ICONS = {
-        1: 'Images/Misc/Shallow.png',
-        2: 'Images/Misc/Deep.png',
-        3: 'Images/Misc/All.png'
+        1: '/Resources/Misc/Shallow.png',
+        2: '/Resources/Misc/Deep.png',
+        3: '/Resources/Misc/All.png'
     };
 
     function getDayIconSrc(index) {
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Hook back half
                 const fishHookBack = document.createElement('img');
-                fishHookBack.src     = 'Images/Misc/FishHook1.png';
+                fishHookBack.src     = '/Resources/Misc/FishHook1.png';
                 fishHookBack.alt     = 'Fishing Hook Back';
                 fishHookBack.classList.add('fish-hook', 'fish-hook-back');
                 fishHookBack.style.visibility = 'hidden';
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Hook front half
                 const fishHookFront = document.createElement('img');
-                fishHookFront.src     = 'Images/Misc/FishHook2.png';
+                fishHookFront.src     = '/Resources/Misc/FishHook2.png';
                 fishHookFront.alt     = 'Fishing Hook Front';
                 fishHookFront.classList.add('fish-hook', 'fish-hook-front');
                 fishHookFront.style.visibility = 'hidden';

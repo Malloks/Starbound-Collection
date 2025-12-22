@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Bowl Size Configuration ---
     const bowlSizeCodes = "112221233213222122122333111321112223221121112313".split('').map(Number);
-    const BOWL_SMALL_SRC = 'Images/Misc/FishbowlSmall.png';
-    const BOWL_MEDIUM_SRC = 'Images/Misc/FishbowlMedium.png';
-    const BOWL_BIG_SRC = 'Images/Misc/FishbowlBig.png';
+    const BOWL_SMALL_SRC = '/Resources/Misc/FishbowlSmall.png';
+    const BOWL_MEDIUM_SRC = '/Resources/Misc/FishbowlMedium.png';
+    const BOWL_BIG_SRC = '/Resources/Misc/FishbowlBig.png';
     const BOWL_DEFAULT_SRC = BOWL_MEDIUM_SRC;
 
     // --- Animation Timings (in milliseconds) ---
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // --- Create Hook Halves ---
                 const fishHookBack = document.createElement('img');
-                fishHookBack.src = 'Images/Misc/FishHook1.png';      // back half
+                fishHookBack.src = '/Resources/Misc/FishHook1.png';      // back half
                 fishHookBack.alt = 'Fishing Hook Back';
                 fishHookBack.classList.add('fish-hook', 'fish-hook-back');
 
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fishRotator.classList.add('fish-rotator');
 
                 const fishHookFront = document.createElement('img');
-                fishHookFront.src = 'Images/Misc/FishHook2.png';     // front half
+                fishHookFront.src = '/Resources/Misc/FishHook2.png';     // front half
                 fishHookFront.alt = 'Fishing Hook Front';
                 fishHookFront.classList.add('fish-hook', 'fish-hook-front');
 

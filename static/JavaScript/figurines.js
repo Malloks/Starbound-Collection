@@ -137,9 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // (the rest of your helper functions — getPedestalImage, applyPedestalAnimation, removePedestalAnimation — remain unchanged)
 
 function getPedestalImage(folderName) {
-  if (folderName === 'Ores')    return 'Images/Misc/OrePedistal.png';
-  if (folderName === 'Bosses')  return 'Images/Misc/BossPedistal.png';
-  return 'Images/Misc/Pedistal.png';
+  if (folderName === 'Ores')    return '/Resources/Misc/OrePedistal.png';
+  if (folderName === 'Bosses')  return '/Resources/Misc/BossPedistal.png';
+  return '/Resources/Misc/Pedistal.png';
 }
 
 function applyPedestalAnimation(gridItem, img, number, animate = true, savedPedestalPosition = null, pedestalImage) {

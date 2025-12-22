@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const allVideos = [];
     for (let i = 1; i <= 3; i++) {
       const vid = document.createElement('video');
-      vid.src         = `/Images/Animation/${baseFolder}/${folder}/${i}.webm`;
+      vid.src         = `/Resources/Animation/${baseFolder}/${folder}/${i}.webm`;
       vid.loop        = true;
       vid.muted       = true;
       vid.playsInline = true;
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         vid.pause();
         vid.style.visibility = 'hidden';
         const doneImg = document.createElement('img');
-        doneImg.src                 = `/Images/${baseFolder}/${folder}/done/${i}.png`;
+        doneImg.src                 = `/Resources/Images/${baseFolder}/${folder}/done/${i}.png`;
         doneImg.alt                 = `${folder} done ${i}`;
         doneImg.className           = 'animation-frame set-image';
         doneImg.dataset.doneOverlay = 'true';
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             originalVid.style.visibility = 'hidden';
 
             const doneVid = document.createElement('video');
-            doneVid.src         = `/Images/Animation/${baseFolder}/${folder}/${idx+1}done.webm`;
+            doneVid.src         = `/Resources/Animation/${baseFolder}/${folder}/${idx+1}done.webm`;
             doneVid.loop        = false;
             doneVid.muted       = true;
             doneVid.autoplay    = true;
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             doneVid.addEventListener('ended', () => {
               doneVid.remove();
               const doneImg = document.createElement('img');
-              doneImg.src                 = `/Images/${baseFolder}/${folder}/done/${idx+1}.png`;
+              doneImg.src                 = `/Resources/Images/${baseFolder}/${folder}/done/${idx+1}.png`;
               doneImg.alt                 = `${folder} done ${idx+1}`;
               doneImg.className           = 'animation-frame set-image';
               doneImg.dataset.doneOverlay = 'true';
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
           // preload & play release clip
           const releaseVid = document.createElement('video');
-          releaseVid.src         = `/Images/Animation/${baseFolder}/${folder}/${idx+1}release.webm`;
+          releaseVid.src         = `/Resources/Animation/${baseFolder}/${folder}/${idx+1}release.webm`;
           releaseVid.preload     = 'auto';
           releaseVid.loop        = false;
           releaseVid.muted       = true;

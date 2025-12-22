@@ -2,9 +2,9 @@ const CACHE_NAME = 'site-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/css/styles.css',
-  '/js/food.js',
-  '/Images/Misc/cloche.png',
+  '/static/Css/food.css',
+  '/static/JavaScript/food.js',
+  '/Resources/Misc/cloche.png',
 ];
 
 self.addEventListener('install', event => {
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // If already collected, show overlay in rotated state
         if (collected) {
           const staticOverlay = document.createElement('img');
-          staticOverlay.src = '/Images/Misc/cloche.png';
+          staticOverlay.src = '/Resources/Misc/cloche.png';
           staticOverlay.className = 'cloche-overlay visible rotate';
           item.appendChild(staticOverlay);
         }
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else {
             // Collect: create overlay, drop, then rotate
             const overlay = document.createElement('img');
-            overlay.src = '/Images/Misc/cloche.png';
+            overlay.src = '/Resources/Misc/cloche.png';
             overlay.className = 'cloche-overlay';
             item.appendChild(overlay);
 

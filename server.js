@@ -34,17 +34,27 @@ app.use((req, res, next) => {
   if (capMatch) {
     const name = capMatch[1];
     const filename = name.charAt(0).toLowerCase() + name.slice(1) + '.html';
-    const fullPath = path.join(__dirname, filename);
-    if (fs.existsSync(fullPath)) {
-      return res.sendFile(fullPath);
+    const htmlPath = path.join(__dirname, 'static', 'HTML', filename);
+    const legacyPath = path.join(__dirname, filename);
+    if (fs.existsSync(htmlPath)) {
+      return res.sendFile(htmlPath);
+    }
+    if (fs.existsSync(legacyPath)) {
+      return res.sendFile(legacyPath);
     }
   }
   next();
 });
 
 //
-// 3) Static‐serve your project root, hiding “.html” via extensions fallback
+// 3) Static-serve HTML directories with extension fallback
 //
+app.use(
+  express.static(path.join(__dirname, 'static', 'HTML'), {
+    extensions: ['html']
+  })
+);
+
 app.use(
   express.static(path.join(__dirname), {
     extensions: ['html']
@@ -52,9 +62,10 @@ app.use(
 );
 
 //
-// 4) Serve Images folder
+// 4) Serve relocated static and resource folders
 //
-app.use('/Images', express.static(path.join(__dirname, 'Images')));
+app.use('/static', express.static(path.join(__dirname, 'static')));
+app.use('/Resources', express.static(path.join(__dirname, 'Resources')));
 
 //
 // 5) Your existing /images API
@@ -79,7 +90,7 @@ app.get('/images', (req, res) => {
     return res.status(400).json({ error: 'Folder query parameter is required.' });
   }
 
-  const imagesDir = path.join(__dirname, 'Images', folder);
+  const imagesDir = path.join(__dirname, 'Resources', 'Images', folder);
   if (!fs.existsSync(imagesDir)) {
     return res.status(404).json({ error: `Folder “${folder}” does not exist.` });
   }

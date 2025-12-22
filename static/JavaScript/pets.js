@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           img.style.transition   = 'none';
 
           const pod = document.createElement('img');
-          pod.src = 'Images/Misc/Capture_Pod.png';
+          pod.src = '/Resources/Misc/Capture_Pod.png';
           pod.alt = 'Capture Pod';
           pod.classList.add('capture-pod-image');
           gridItem.appendChild(pod);
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           if (!hasPod) {
             // ▶ forward
-            animImg.src = `Images/Animation/CaptureAnim.webp?reload=${Date.now()}`;
+            animImg.src = `/Resources/Animation/CaptureAnim.webp?reload=${Date.now()}`;
             gridItem.appendChild(animImg);
 
             img.style.position   = 'relative';
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               // finalize capture
               img.style.opacity = 0;
               const pod = document.createElement('img');
-              pod.src = 'Images/Misc/Capture_Pod.png';
+              pod.src = '/Resources/Misc/Capture_Pod.png';
               pod.alt = 'Capture Pod';
               pod.classList.add('capture-pod-image');
               gridItem.appendChild(pod);
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (pod) pod.remove();
             gridItem.classList.remove('capture-pod');
 
-            animImg.src = `Images/Animation/CaptureAnimR.webp?reload=${Date.now()}`;
+            animImg.src = `/Resources/Animation/CaptureAnimR.webp?reload=${Date.now()}`;
             gridItem.appendChild(animImg);
 
             img.style.position   = 'relative';

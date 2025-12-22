@@ -2,7 +2,7 @@
 
 @font-face {
     font-family: Starbound Font;
-    src: url(../Resources/Font/starbound-font.ttf);
+    src: url(/Resources/Fonts/starbound-font.ttf);
 }
 
 /* Disable text selection */

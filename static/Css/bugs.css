@@ -86,7 +86,7 @@
   left: 0;
   width: 100%;
   height: 20px;
-  background: url('/Images/Misc/Rope.png') no-repeat bottom center;
+  background: url('/Resources/Misc/Rope.png') no-repeat bottom center;
   background-size: cover;
   pointer-events: none;
   z-index: 5;

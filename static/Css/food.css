@@ -86,20 +86,20 @@ h1 {
     -webkit-mask-image: '';
   }
   25% {
-    mask-image: url("../Images/Animation/Eaten/bite-mask-1.png");
-    -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-1.png");
+    mask-image: url("/Resources/Animation/Eaten/bite-mask-1.png");
+    -webkit-mask-image: url("/Resources/Animation/Eaten/bite-mask-1.png");
   }
   50% {
-    mask-image: url("../Images/Animation/Eaten/bite-mask-2.png");
-    -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-2.png");
+    mask-image: url("/Resources/Animation/Eaten/bite-mask-2.png");
+    -webkit-mask-image: url("/Resources/Animation/Eaten/bite-mask-2.png");
   }
   75% {
-    mask-image: url("../Images/Animation/Eaten/bite-mask-3.png");
-    -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-3.png");
+    mask-image: url("/Resources/Animation/Eaten/bite-mask-3.png");
+    -webkit-mask-image: url("/Resources/Animation/Eaten/bite-mask-3.png");
   }
   100% {
-    mask-image: url("../Images/Animation/Eaten/bite-mask-4.png");
-    -webkit-mask-image: url("../Images/Animation/Eaten/bite-mask-4.png");
+    mask-image: url("/Resources/Animation/Eaten/bite-mask-4.png");
+    -webkit-mask-image: url("/Resources/Animation/Eaten/bite-mask-4.png");
   }
 }
 

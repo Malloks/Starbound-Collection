@@ -1,28 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const DROP_SHADOW = 'drop-shadow(5px 5px 5px #1a1a1a)';
     const savedState = JSON.parse(localStorage.getItem('vanityItemsStateRevamp')) || {};
-    // Grab the H1
-    const titleEl = document.getElementById('page-title');
-
-    function checkAllFossils() {
-      const allItems = document.querySelectorAll('.grid-item');
-      const allDone = Array.from(allItems).every(el => {
-        const key   = `${el.dataset.category}/${el.dataset.item}`;
-        const state = savedState[key];
-        return state && Object.values(state).every(p => p.visible);
-      });
-
-      // Persist the “all fossils done” flag:
-      localStorage.setItem('fossilsAllDone', allDone ? 'true' : 'false');
-
-      // Toggle the page title glow:
-      if (titleEl) titleEl.classList.toggle('completed', allDone);
-
-      // Toggle the Fossils nav-link glow:
-      const navLink = document.querySelector('.navbar-links a[href="fossils.html"]');
-      if (navLink) navLink.classList.toggle('completed', allDone);
-    }
-
     const categories = ['Small', 'Medium', 'Large'];
     const baseFolder = 'Fossils';
     const gridElements = {
@@ -31,20 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Large': document.getElementById('large-grid')
     };
     const imageCache = new Map();
-
-    // ↓ NEW: lazy‐loader for icons
-    const iconObserver = new IntersectionObserver((entries, obs) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const imgEl = entry.target;
-          imgEl.src = imgEl.dataset.src;
-          obs.unobserve(imgEl);
-        }
-      }
-    }, {
-      rootMargin: '100px',
-      threshold: 0.1
-    });
 
     // --- getImage function remains the same ---
     const getImage = async (src) => {
@@ -81,12 +44,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Derive unique item folder names
                 const itemFolders = itemsPaths.reduce((acc, path) => {
                     // Adjusted regex to handle both .webp and .png in paths potentially
-                    const match = path.match(new RegExp(`^Images/${baseFolder}/${category}/([^/]+)/`));
+                    const match = path.match(new RegExp(`^(?:Resources/)?Images/${baseFolder}/${category}/([^/]+)/`));
                     if (match && match[1] && !acc.includes(match[1])) {
                          acc.push(match[1]);
                     }
                     return acc;
                  }, []);
+
 
                 // --- helper to throttle N concurrent fetches ---
                 function fetchWithLimit(tasks, limit = 5) {
@@ -110,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .catch(() => ({ item, images: [], error: true }))
                 );
               
-                // ↓ REPLACE your old Promise.all(itemDetailPromises) with:
+                // now fetch only 5 at a time
                 const itemDetails = await fetchWithLimit(detailTasks, 5);
 
                 // Process items
@@ -123,7 +87,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const gridItem = document.createElement('div');
                     gridItem.classList.add('grid-item');
                     gridItem.setAttribute('data-category', category);
-                    gridItem.dataset.item = item;
 
                     const imagesContainer = document.createElement('div');
                     imagesContainer.classList.add('images-container');
@@ -157,15 +120,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         if (i === 0) { // Container 1: Mannequin and Overlays
                             // ↓ make this container the positioning context for its animImg
+                            container.style.position = 'relative';
                             container.style.overflow = 'visible';
                             try {
                                 // Keep Mannequin/Display images as WEBP unless specified otherwise
-                                const mannequin = await getImage(`/Images/Misc/${category}Display.webp`);
+                                const mannequin = await getImage(`/Resources/Misc/${category}Display.webp`);
                                 mannequin.alt = 'Mannequin';
                                 mannequin.classList.add('set-image');
                                 mannequin.style.zIndex = "1";
 
-                                const mannequinDone = await getImage(`/Images/Misc/${category}DisplayDone.webp`);
+                                const mannequinDone = await getImage(`/Resources/Misc/${category}DisplayDone.webp`);
                                 mannequinDone.alt = 'MannequinDone';
                                 mannequinDone.classList.add('set-image');
                                 mannequinDone.style.zIndex = "2";
@@ -173,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                 let mannequinAdd = null;
                                 if (category === 'Medium') {
-                                    mannequinAdd = await getImage(`/Images/Misc/MediumDisplayPole.webp`);
+                                    mannequinAdd = await getImage(`/Resources/Misc/MediumDisplayPole.webp`);
                                     mannequinAdd.alt = 'MannequinAdd';
                                     mannequinAdd.classList.add('set-image');
                                     mannequinAdd.style.zIndex = "0";
@@ -200,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         console.warn(`Overlay image ${num}_On.(png/webp) not found for ${category}/${item}`);
                                         continue;
                                     }
-                                    const overlay = await getImage(`/${overlayPath}`); // Assumes paths start with /Images/...
+                                    const overlay = await getImage(`/${overlayPath}`); // Assumes paths start with /Resources/... now
                                     overlay.alt = `Overlay ${num}`;
                                     overlay.classList.add('set-image');
                                     overlay.style.opacity = '0';
@@ -248,25 +212,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     continue; // Skip this icon container if path not found
                                 }
 
-                                // ↓ NEW: create placeholder img & defer actual load
-                                // ↓ NEW: create placeholder img & defer actual load
-                                const baseImg = document.createElement('img');
-                                baseImg.dataset.src = `/${iconPath}`;
-                                baseImg.alt        = `Icon ${num}`;
+                                const baseImg = await getImage(`/${iconPath}`); // Assumes paths start with /Resources/... now
+                                baseImg.alt = `Icon ${num}`;
                                 baseImg.classList.add('set-image');
-                                // — apply savedState so reloads honor prior grayscaling —
+                                baseImg.style.filter = 'grayscale(0%)';
+                                baseImg.style.transition = 'filter 0.5s ease';
+                                baseImg.style.cursor = 'pointer';
+
+                                // Initialize state (logic unchanged)
                                 const pathKeyIcon = `${category}/${item}`;
                                 const savedIconState = savedState[pathKeyIcon]?.[num];
-                                // always include the drop-shadow, then gray or not
-                                baseImg.style.filter =
-                                  `${DROP_SHADOW} grayscale(${savedIconState?.grayed ? '100%' : '0'})`;
-                                baseImg.style.transition = 'filter 0.5s ease';
-                                baseImg.style.cursor     = 'pointer';
+                                if (savedIconState?.grayed) {
+                                    baseImg.style.filter = 'grayscale(100%)';
+                                } else {
+                                    baseImg.style.filter = 'grayscale(0%)';
+                                }
                                 container.appendChild(baseImg);
                                 iconImgs[num] = baseImg;
-                                iconObserver.observe(baseImg);
-                                
-                                // ↑ end lazy‐loader hook
 
                                 let isAnimating = false;
 
@@ -292,19 +254,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         setContainerAnimationState(true);
                                     };
                                 
-                                    // flip overlay+icon,.persist…
+                                    // flip overlay+icon, persist…
                                     const overlay = overlayImgs[num];
                                     if (!overlay) return;
                                     const wasAllVisibleBeforeClick = mannequinDone.style.opacity === '1';
                                     const newVisible = overlay.style.opacity !== '1';
                                     overlay.style.opacity = newVisible ? '1' : '0';
-                                    baseImg.style.filter =
-                                      `${DROP_SHADOW} grayscale(${newVisible ? '100%' : '0'})`;                                
+                                    baseImg.style.filter = newVisible ? 'grayscale(100%)' : 'grayscale(0%)';
+                                
                                     // update savedState…
                                     savedState[pathKey] = savedState[pathKey] || {};
                                     savedState[pathKey][num] = { visible: newVisible, grayed: newVisible };
                                     localStorage.setItem('vanityItemsStateRevamp', JSON.stringify(savedState));
-                                    checkAllFossils();
                                 
                                     // recompute “all visible” & decide
                                     const visibleCount = Object.values(savedState[pathKey]).filter(d => d.visible).length;
@@ -367,117 +328,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const smallUrl = allVisible
-          ? `/Images/Animation/SmallFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/SmallFossilDoneR.webp?reload=${Date.now()}`;
-
+          ? `/Resources/Animation/SmallFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/SmallFossilDoneR.webp?reload=${Date.now()}`;
+        animImg.src = smallUrl;
+    
         animImg.classList.add('set-image', 'fossil-anim-img');
         animImg.style.position = 'absolute';
         animImg.style.zIndex   = 3;
         animImg.style.pointerEvents = 'none';
+    
+        mannequinDone.parentElement.appendChild(animImg);
 
-        animImg.onload = () => {
-            const container = mannequinDone.parentElement;
-            // hide base only after anim is ready (for reverse case)
-            if (!allVisible) {
-                mannequinDone.style.opacity = '0';
-            }
-            container.appendChild(animImg);
-
-            let timeDuration;
-            if (allVisible && !wasAllVisibleBeforeClick) {
-                timeDuration = 1150;
-            } else {
-                timeDuration = 750;
-            }
-            setTimeout(() => {
-                if (animImg.parentElement) animImg.remove();
-                mannequinDone.style.opacity = allVisible ? '1' : '0';
-                callback();
-            }, timeDuration);
-        };
-
-        animImg.src = smallUrl;
+         let timeDuration;
+         if (allVisible && !wasAllVisibleBeforeClick) {
+             timeDuration = 1150;
+         } else {
+             mannequinDone.style.opacity = '0';
+             timeDuration = 750;
+         }
+         setTimeout(() => {
+             if (animImg.parentElement) {
+                animImg.remove();
+             }
+             mannequinDone.style.opacity = allVisible ? '1' : '0';
+             callback();
+         }, timeDuration);
     }
 
     function animateMedium(allVisible, wasAllVisibleBeforeClick, mannequinAdd, mannequinDone, callback) {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const medUrl = allVisible
-          ? `/Images/Animation/MediumFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/MediumFossilDoneR.webp?reload=${Date.now()}`;
-
+          ? `/Resources/Animation/MediumFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/MediumFossilDoneR.webp?reload=${Date.now()}`;
+        animImg.src = medUrl;
+    
         animImg.classList.add('set-image', 'fossil-anim-img');
         animImg.style.position = 'absolute';
         animImg.style.left     = '65px';
         animImg.style.top      = '35px';
         animImg.style.zIndex   = 3;
         animImg.style.pointerEvents = 'none';
+    
+        mannequinAdd.parentElement.appendChild(animImg);
 
-        animImg.onload = () => {
-            const container = mannequinAdd.parentElement;
-            // for forward: hide the “add” right away
-            if (allVisible) {
-                mannequinAdd.style.opacity = '0';
-                mannequinAdd.style.transition = 'opacity 0.2s ease';
-            } else {
-                // reverse: keep add/mannequin until anim starts
-                mannequinDone.style.opacity = '0';
-            }
-            container.appendChild(animImg);
+        let timeDuration;
+        if (allVisible && !wasAllVisibleBeforeClick) {
+            mannequinAdd.style.opacity = '0';
+            mannequinAdd.style.transition = 'opacity 0.2s ease';
+            timeDuration = 1150;
+        } else {
+            mannequinAdd.style.opacity = '1';
+            mannequinAdd.style.transition = 'opacity 0.2s ease';
+            mannequinDone.style.opacity = '0';
+            timeDuration = 750;
+        }
 
-            let timeDuration;
-            if (allVisible && !wasAllVisibleBeforeClick) {
-                timeDuration = 1150;
-            } else {
-                timeDuration = 750;
-            }
-            setTimeout(() => {
-                if (animImg.parentElement) animImg.remove();
-                mannequinDone.style.opacity = allVisible ? '1' : '0';
-                if (mannequinAdd) mannequinAdd.style.opacity = allVisible ? '0' : '1';
-                callback();
-            }, timeDuration);
-        };
-
-        animImg.src = medUrl;
+        setTimeout(() => {
+           if (animImg.parentElement) {
+               animImg.remove();
+           }
+            mannequinDone.style.opacity = allVisible ? '1' : '0';
+            if(mannequinAdd) mannequinAdd.style.opacity = allVisible ? '0' : '1';
+            callback();
+        }, timeDuration);
     }
 
     function animateLarge(allVisible, wasAllVisibleBeforeClick, mannequinDone, callback) {
         const animImg = new Image();
         // force-reload so each <img> restarts its WebP animation
         const largeUrl = allVisible
-          ? `/Images/Animation/LargeFossilDone.webp?reload=${Date.now()}`
-          : `/Images/Animation/LargeFossilDoneR.webp?reload=${Date.now()}`;
-    
+          ? `/Resources/Animation/LargeFossilDone.webp?reload=${Date.now()}`
+          : `/Resources/Animation/LargeFossilDoneR.webp?reload=${Date.now()}`;
+        animImg.src = largeUrl;
+
         animImg.classList.add('set-image', 'fossil-anim-img');
         animImg.style.position = 'absolute';
         animImg.style.left     = '216px';
-        animImg.style.top      = '11px';
+        animImg.style.top      = '10.5px';
         animImg.style.zIndex   = 3;
         animImg.style.pointerEvents = 'none';
-    
-        animImg.onload = () => {
-            const container = mannequinDone.parentElement;
-        
-            // hide the base for both forward (already was) and especially the reverse animation
+
+        mannequinDone.parentElement.appendChild(animImg);
+
+        let timeDuration;
+        if (allVisible && !wasAllVisibleBeforeClick) {
+           mannequinDone.style.opacity = '0';
+            timeDuration = 1725;
+        } else {
             mannequinDone.style.opacity = '0';
-        
-            container.appendChild(animImg);
-        
-            // choose duration based on direction
-            const timeDuration = (allVisible && !wasAllVisibleBeforeClick)
-              ? 1725
-              : 1380;
-        
-            setTimeout(() => {
-                if (animImg.parentElement) animImg.remove();
-                // restore base to its final visible state
-                mannequinDone.style.opacity = allVisible ? '1' : '0';
-                callback();
-            }, timeDuration);
-        };
-    
-        animImg.src = largeUrl;
+            timeDuration = 1380;
+        }
+
+        setTimeout(() => {
+           if (animImg.parentElement) {
+               animImg.remove();
+           }
+            mannequinDone.style.opacity = allVisible ? '1' : '0';
+            callback();
+        }, timeDuration);
     }
-    checkAllFossils();
 });
