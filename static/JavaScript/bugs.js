@@ -130,17 +130,47 @@ document.addEventListener('DOMContentLoaded', async function() {
   grid.appendChild(frag);
 
   // 5) Fetch master folder list, then build real grid
+  const groupIconPaths = (paths) => {
+    const grouped = new Map();
+    const iconPattern = new RegExp(`^(?:Resources/)?Images/${baseFolder}/([^/]+)/([^/]+)$`);
+
+    paths.forEach((path) => {
+      if (!path.toLowerCase().endsWith('.png') || path.includes('/done/')) {
+        return;
+      }
+      const match = path.match(iconPattern);
+      if (!match || !match[1]) {
+        return;
+      }
+      const folder = match[1];
+      if (!grouped.has(folder)) {
+        grouped.set(folder, []);
+      }
+      grouped.get(folder).push(path.startsWith('/') ? path : `/${path}`);
+    });
+
+    grouped.forEach((list) => {
+      list.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    });
+
+    return grouped;
+  };
+
+  let iconsByFolder = new Map();
+
   try {
     const listRes = await fetch(`/images?folder=${baseFolder}`);
     if (!listRes.ok) throw new Error('Failed to list ' + baseFolder);
-    await listRes.json();
+    const masterPaths = await listRes.json();
+    iconsByFolder = groupIconPaths(Array.isArray(masterPaths) ? masterPaths : []);
 
     // Replace placeholders with actual content
     folders.forEach((folder, i) => {
       const container = grid.children[i];
       container.innerHTML = '';
       container.className = 'bug-container';
-      buildFolder(container, folder);
+      const iconPaths = iconsByFolder.get(folder) || [];
+      buildFolder(container, folder, iconPaths);
     });
 
     // Persist and mirror
@@ -154,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   // ======================================================================
   // Helper: build one folder’s section (exactly your original logic)
   // ======================================================================
-  async function buildFolder(container, folder) {
+  async function buildFolder(container, folder, iconPaths) {
     // 5a) Nav-link toggling (mirrors pets.js)
     const bugsLink = document.querySelector('.navbar-links a[href$="bugs.html"]');
     function toggleBugsNavLink() {
@@ -162,6 +192,41 @@ document.addEventListener('DOMContentLoaded', async function() {
       const allCaught = Object.values(state).length > 0
         && Object.values(state).every(s => s.hasJar);
       if (bugsLink) bugsLink.classList.toggle('completed', allCaught);
+    }
+
+    function startLoopFromRandomPoint(loopVid) {
+      const safePlay = () => loopVid.play().catch(() => {});
+      const seekAndPlay = () => {
+        const duration = loopVid.duration;
+        if (!Number.isFinite(duration) || duration <= 0) {
+          safePlay();
+          return;
+        }
+        const maxStart = Math.max(duration - 0.1, 0);
+        const targetTime = maxStart > 0 ? Math.random() * maxStart : 0;
+        let settled = false;
+        const handleSeeked = () => {
+          if (settled) return;
+          settled = true;
+          loopVid.removeEventListener('seeked', handleSeeked);
+          safePlay();
+        };
+        loopVid.addEventListener('seeked', handleSeeked, { once: true });
+        try {
+          loopVid.currentTime = targetTime;
+        } catch {
+          loopVid.removeEventListener('seeked', handleSeeked);
+          handleSeeked();
+          return;
+        }
+        setTimeout(handleSeeked, 250);
+      };
+
+      if (loopVid.readyState >= 1 && Number.isFinite(loopVid.duration)) {
+        seekAndPlay();
+      } else {
+        loopVid.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+      }
     }
 
     // 5b) Local state for this folder
@@ -194,11 +259,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         imageRendering: 'pixelated',
         transition:     'opacity 200ms ease-in-out'
       });
-      vid.addEventListener('loadedmetadata', () => {
-        const delay = Math.random() * 1000;
-        setTimeout(() => vid.play().catch(() => {}), delay);
-      }, { once: true });
-
       allVideos.push(vid);
       bigBox.appendChild(vid);
 
@@ -213,16 +273,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         doneImg.dataset.doneOverlay = 'true';
         doneImg.dataset.slotIndex   = i-1;
         bigBox.appendChild(doneImg);
+      } else {
+        startLoopFromRandomPoint(vid);
       }
     }
     container.appendChild(bigBox);
 
     // 5e) Icons row + click handlers
-    const iconRes = await fetch(`/images?folder=${baseFolder}/${folder}`);
-    if (!iconRes.ok) throw new Error('Failed to list icons for ' + folder);
-    const paths = (await iconRes.json())
-      .filter(p => p.toLowerCase().endsWith('.png'))
+    let paths = iconPaths
+      .filter((p) => p.toLowerCase().endsWith('.png'))
       .slice(0, 3);
+
+    if (paths.length === 0) {
+      try {
+        const fallbackRes = await fetch(`/images?folder=${baseFolder}/${folder}`);
+        if (fallbackRes.ok) {
+          const fallbackPaths = await fallbackRes.json();
+          paths = fallbackPaths
+            .filter((p) => p.toLowerCase().endsWith('.png'))
+            .map((p) => (p.startsWith('/') ? p : `/${p}`))
+            .slice(0, 3);
+        }
+      } catch (fallbackErr) {
+        console.error('Failed to fetch icons for folder fallback', folder, fallbackErr);
+      }
+    }
 
     const iconsRow = document.createElement('div');
     iconsRow.className = 'icons-row';
@@ -245,13 +320,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
       // Icon image
       const icon = document.createElement('img');
-      icon.src               = '/' + path;
+      icon.src               = path.startsWith('/') ? path : `/${path}`;
       icon.alt               = `icon ${idx+1}`;
       icon.className         = 'set-image';
       Object.assign(icon.style, {
         cursor:         'pointer',
         imageRendering: 'pixelated'
       });
+      icon.decoding = 'async';
+      icon.loading  = 'lazy';
     // always give the drop-shadow, and if clicked add grayscale
     icon.style.filter = 'drop-shadow(5px 5px 5px #1a1a1a)'
                       + (slotState.clicked[idx] ? ' grayscale(100%)' : '');
@@ -330,10 +407,15 @@ document.addEventListener('DOMContentLoaded', async function() {
           updateBugsNavState();
           icon.style.filter = 'drop-shadow(5px 5px 5px #1a1a1a)';
 
-          // remove done overlays
-          bigBox.querySelectorAll(
-            `[data-done-overlay][data-slot-index="${idx}"]`
-          ).forEach(el => el.remove());
+          const doneOverlays = Array.from(
+            bigBox.querySelectorAll(`[data-done-overlay][data-slot-index="${idx}"]`)
+          );
+          let overlaysRemoved = false;
+          const removeDoneOverlays = () => {
+            if (overlaysRemoved) return;
+            doneOverlays.forEach((el) => el.remove());
+            overlaysRemoved = true;
+          };
 
           // preload & play release clip
           const releaseVid = document.createElement('video');
@@ -360,17 +442,26 @@ document.addEventListener('DOMContentLoaded', async function() {
           releaseVid.addEventListener('loadedmetadata', () => {
             releaseVid.currentTime = 0;
             releaseVid.pause();
-            setTimeout(() => releaseVid.play().catch(() => {}), 50);
+            removeDoneOverlays();
+            releaseVid.play().catch(() => {});
+          }, { once: true });
+
+          releaseVid.addEventListener('error', () => {
+            removeDoneOverlays();
+            icon.dataset.busy = 'false';
+            releaseVid.remove();
           }, { once: true });
 
           releaseVid.addEventListener('ended', () => {
-            releaseVid.remove();
             if (!bigBox.contains(originalVid)) {
               bigBox.appendChild(originalVid);
             }
             originalVid.style.visibility = 'visible';
             originalVid.currentTime = 0;
             originalVid.play().catch(() => {});
+
+            removeDoneOverlays();
+            releaseVid.remove();
             icon.dataset.busy = 'false';
           }, { once: true });
         }

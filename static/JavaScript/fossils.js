@@ -307,8 +307,19 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (allVisible && !wasAllVisibleBeforeClick) {
              timeDuration = 1150;
          } else {
-             mannequinDone.style.opacity = '0';
              timeDuration = 750;
+         }
+
+         if (!(allVisible && !wasAllVisibleBeforeClick)) {
+             const hideMannequin = () => {
+                 mannequinDone.style.opacity = '0';
+             };
+             if (animImg.complete && animImg.naturalWidth > 0) {
+                 requestAnimationFrame(hideMannequin);
+             } else {
+                 animImg.addEventListener('load', () => requestAnimationFrame(hideMannequin), { once: true });
+             }
+             animImg.addEventListener('error', hideMannequin, { once: true });
          }
          setTimeout(() => {
              if (animImg.parentElement) {
@@ -344,8 +355,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             mannequinAdd.style.opacity = '1';
             mannequinAdd.style.transition = 'opacity 0.2s ease';
-            mannequinDone.style.opacity = '0';
             timeDuration = 750;
+        }
+
+        if (!(allVisible && !wasAllVisibleBeforeClick)) {
+            const hideTargets = () => {
+                mannequinDone.style.opacity = '0';
+            };
+            if (animImg.complete && animImg.naturalWidth > 0) {
+                requestAnimationFrame(hideTargets);
+            } else {
+                animImg.addEventListener('load', () => requestAnimationFrame(hideTargets), { once: true });
+            }
+            animImg.addEventListener('error', hideTargets, { once: true });
         }
 
         setTimeout(() => {
@@ -380,8 +402,19 @@ document.addEventListener('DOMContentLoaded', async () => {
            mannequinDone.style.opacity = '0';
             timeDuration = 1725;
         } else {
-            mannequinDone.style.opacity = '0';
             timeDuration = 1380;
+        }
+
+        if (!(allVisible && !wasAllVisibleBeforeClick)) {
+            const hideMannequin = () => {
+                mannequinDone.style.opacity = '0';
+            };
+            if (animImg.complete && animImg.naturalWidth > 0) {
+                requestAnimationFrame(hideMannequin);
+            } else {
+                animImg.addEventListener('load', () => requestAnimationFrame(hideMannequin), { once: true });
+            }
+            animImg.addEventListener('error', hideMannequin, { once: true });
         }
 
         setTimeout(() => {

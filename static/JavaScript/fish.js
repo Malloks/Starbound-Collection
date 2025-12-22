@@ -12,8 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const savedStateKey = 'gridStateFish_v8'; // Increment version
-    const savedState    = JSON.parse(localStorage.getItem(savedStateKey)) || {};
+    const savedStateKey    = 'gridStateFish_v8'; // Increment version
+    const savedState       = JSON.parse(localStorage.getItem(savedStateKey)) || {};
+    let savedStateTouched  = false;
 
     // Fish labels per region
     const fishLabels = {
@@ -303,6 +304,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Apply saved state (show bowl if caught)
                 const stateId = `${folderName}_${fileNumber}`;
+                const stateEntry = savedState[stateId];
+                if (!stateEntry) {
+                    savedState[stateId] = { hasFishbowl: false };
+                    savedStateTouched = true;
+                } else if (typeof stateEntry.hasFishbowl !== 'boolean') {
+                    stateEntry.hasFishbowl = !!stateEntry.hasFishbowl;
+                    savedStateTouched = true;
+                }
                 function applyInitialState() {
                     const prevTransition = img.style.transition;
                     img.style.transition = 'none';
@@ -419,6 +428,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         createGridItems(toxicImages,  toxicGrid,  'Toxic');
         createGridItems(arcticImages, arcticGrid, 'Arctic');
         createGridItems(lavaImages,   lavaGrid,   'Lava');
+
+        if (savedStateTouched) {
+            localStorage.setItem(savedStateKey, JSON.stringify(savedState));
+            savedStateTouched = false;
+        }
 
         checkAllCaught();
     } catch (error) {

@@ -64,6 +64,7 @@
 
   width: fit-content;
   height: fit-content;
+  min-height: 105px; /* keep launch height aligned with final aspect */
 }
 
 /* Stack every animation frame */
@@ -77,6 +78,12 @@
   object-fit: contain;
   transition: opacity 0.3s ease-in-out;
   filter: drop-shadow(5px 5px 5px #1a1a1a);
+}
+
+.big-container .set-video {
+  height: 105px;          /* avoid initial 150px default video box */
+  max-height: 105px;
+  width: auto;
 }
 
 /* Velvet rope graphic (optional) */
